@@ -54,11 +54,31 @@ PORT=16125
 export NEWT_COLORS='
 title=black,
 '
+if [[ "$FLUXOS_VERSION" == "" ]]; then
+  FLUXOS_PATH="/home/$USER/zelflux"
+  FLUX_WATCHDOG_PATH="/home/$USER/watchdog"
+  FLUX_DAEMON_PATH="/home/$USER/.flux"
+	FLUX_BENCH_PATH="/home/$USER/.fluxbenchmark"
+  DATA_PATH="/home/$USER"
+  MONGODB_DATA_PATH="/var/lib/mongodb"
+  MONGODB_LOG_PATH="/var/log/mongodb"
+	FLUX_DAEMON_SERVICE="zelflux"
+else
+  FLUXOS_PATH="/dat/usr/lib/fluxos"
+  FLUX_WATCHDOG_PATH="/dat/usr/lib/fluxwatchdog"
+  FLUX_DAEMON_PATH="/dat/var/lib/fluxd"
+	FLUX_BENCH_PATH="/dat/usr/lib/fluxbenchd"
+  DATA_PATH="/dat"
+  MONGODB_DATA_PATH="/dat/var/lib/mongodb"
+  MONGODB_LOG_PATH="/dat/var/log/mongodb"
+	FLUX_DAEMON_SERVICE="fluxd"
+fi
+
 ##### CONFIGS SECTION ######################################
 function watchdog_conf_create(){
-	sudo touch /home/$USER/watchdog/config.js
-	sudo chown $USER:$USER /home/$USER/watchdog/config.js
-	cat <<- EOF >|  /home/$USER/watchdog/config.js
+	sudo touch $WATCHDOG_PATH/config.js
+	sudo chown $USER:$USER $WATCHDOG_PATH/config.js
+	cat <<- EOF >|  $WATCHDOG_PATH/config.js
   module.exports = {
 	  label: '${node_label}',
 	  tier_eps_min: '${eps_limit}',
@@ -81,8 +101,8 @@ function fluxos_conf_create(){
 	else
 		testnet=false
 	fi
-	touch /home/$USER/$FLUX_DIR/config/userconfig.js
-	cat <<- EOF >| /home/$USER/$FLUX_DIR/config/userconfig.js
+	touch $FLUXOS_PATH/config/userconfig.js
+	cat <<- EOF >| $FLUXOS_PATH/config/userconfig.js
 module.exports = {
   initial: {
     ipaddress: '${WANIP}',
@@ -98,16 +118,16 @@ EOF
 
 function flux_daemon_conf_create() {
   explorers=(
-      "explorer.runonflux.io"
-      "explorer.zelcash.online"
-      "blockbook.runonflux.io"
-      "explorer.flux.zelcore.io"
+    "explorer.runonflux.io"
+    "explorer.zelcash.online"
+    "blockbook.runonflux.io"
+    "explorer.flux.zelcore.io"
   )
   selected_ips=($(curl -s -m 20 https://api.runonflux.io/apps/enterprisenodes | jq -r '.data[] | select(.score >= 2200 and .score <= 3000) | .ip' 2>/dev/null | shuf -n 25))
   nodes=("${selected_ips[@]}" "${explorers[@]}")
   RPCUSER=$(pwgen -1 8 -n)
   PASSWORD=$(pwgen -1 20 -n)
-  touch /home/$USER/$CONFIG_DIR/$CONFIG_FILE
+  touch $FLUX_DAEMON_PATH/$CONFIG_FILE
   {
     cat <<- EOF
     rpcuser=$RPCUSER
@@ -143,13 +163,13 @@ EOF
     for node in "${nodes[@]}"; do
       echo "addnode=$node"
     done
-  } | sed 's/^[[:space:]]*//' >| /home/$USER/$CONFIG_DIR/$CONFIG_FILE
+  } | sed 's/^[[:space:]]*//' >| $FLUX_DAEMON_PATH/$CONFIG_FILE
 }
 
 function install_conf_create(){
-	sudo touch /home/$USER/install_conf.json
-	sudo chown $USER:$USER /home/$USER/install_conf.json
-	cat <<- EOF >| /home/$USER/install_conf.json
+	sudo touch $DATA_PATH/install_conf.json
+	sudo chown $USER:$USER $DATA_PATH/install_conf.json
+	cat <<- EOF >|  $DATA_PATH/install_conf.json
 	{
 	  "import_settings": "${import_settings}",
 	  "prvkey": "${prvkey}",
@@ -182,9 +202,9 @@ function install_conf_create(){
 
 ###### SMART CONFIG
 function padding() {
-msg="$1"
-padding=".................................................................................................................."
-echo -e "$(printf "%s%s %s\n" "$msg" "${CYAN}${padding:${#msg}}" "${CYAN}[$2${CYAN}]${NC}")"
+  msg="$1"
+  padding=".................................................................................................................."
+  echo -e "$(printf "%s%s %s\n" "$msg" "${CYAN}${padding:${#msg}}" "${CYAN}[$2${CYAN}]${NC}")"
 }
 
 function insert() {
@@ -193,7 +213,7 @@ function insert() {
 }
 
 function RemoveLine(){
-  sed -i "/$1/d" /home/$USER/zelflux/config/userconfig.js
+  sed -i "/$1/d" $FLUXOS_PATH/config/userconfig.js
 }
 
 function ClearList() {
@@ -202,7 +222,7 @@ function ClearList() {
 }
 
 function buildBlockedPortsList() {
-  if [[ ! -f /home/$USER/$FLUX_DIR/config/userconfig.js ]]; then
+  if [[ ! -f $FLUXOS_PATH/config/userconfig.js ]]; then
    padding "${ARROW}${GREEN} [FluxOS] ${CYAN}Config file does not exist...${NC}" "${X_MARK}"
    exit
   fi
@@ -212,8 +232,8 @@ function buildBlockedPortsList() {
   fi
   key="$1"
   value="$2"
-  if [[ $(cat /home/$USER/$FLUX_DIR/config/userconfig.js | grep "$key") == "" ]]; then
-      insert "/home/$USER/$FLUX_DIR/config/userconfig.js" "testnet" "  $key: $value,"
+  if [[ $(cat "$FLUXOS_PATH/config/userconfig.js" | grep "$key") == "" ]]; then
+      insert "$FLUXOS_PATH/config/userconfig.js" "testnet" "  $key: $value,"
       padding "${ARROW}${GREEN} [FluxOS] ${CYAN}$3${NC}" "${CHECK_MARK}"
       return
   fi
@@ -242,7 +262,7 @@ function CreateBlockedPortsList() {
 }
 
 function AddBlockedPorts() {
-  string=$(grep "blockedPorts" $HOME/$FLUX_DIR/config/userconfig.js |  awk -F'[][]' '{print $2}' )
+  string=$(grep "blockedPorts" $FLUXOS_PATH/config/userconfig.js |  awk -F'[][]' '{print $2}' )
   delimiter=","
   declare -a array=($(echo $string | tr "$delimiter" " "))
   ADD=$(whiptail --inputbox "Enter the ports to the blocked list, separated by commas" 8 85 3>&1 1>&2 2>&3)
@@ -266,7 +286,7 @@ function AddBlockedPorts() {
 }
 
 function ImportBlockedPorts(){
-  array=($(grep -w blockedPorts /home/$USER/$FLUX_DIR/config/userconfig.js | grep -o '[[:digit:]]*'))
+  array=($(grep -w blockedPorts $FLUXOS_PATH/config/userconfig.js | grep -o '[[:digit:]]*'))
   sorted_unique_ids=($(echo "${array[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' '))
   printf -v joined '%s,' "${sorted_unique_ids[@]}"
   if [[ "${joined%,}" != "" ]]; then
@@ -325,7 +345,7 @@ function CreateBlockedRepositoryList() {
 }
 
 function AddBlockedRepository() {
-  string=$(grep "blockedRepositories" $HOME/$FLUX_DIR/config/userconfig.js |  awk -F'[][]' '{print $2}' )
+  string=$(grep "blockedRepositories" $FLUXOS_PATH/config/userconfig.js |  awk -F'[][]' '{print $2}' )
   delimiter=","
   declare -a array=($(echo $string | tr "$delimiter" " "))
   ADD=$(whiptail --inputbox "Enter the repositories to the blocked list, separated by commas" 8 85 3>&1 1>&2 2>&3)
@@ -347,7 +367,7 @@ function AddBlockedRepository() {
 }
 
 function buildBlockedRepositoryList() {
-  if [[ ! -f /home/$USER/$FLUX_DIR/config/userconfig.js ]]; then
+  if [[ ! -f "$FLUXOS_PATH/config/userconfig.js" ]]; then
    padding "${ARROW}${GREEN} [FluxOS] ${CYAN}Config file does not exist...${NC}" "${X_MARK}"
    exit
   fi
@@ -357,15 +377,15 @@ function buildBlockedRepositoryList() {
   fi
   key="$1"
   value="$2"
-  if [[ $(cat /home/$USER/$FLUX_DIR/config/userconfig.js | grep "$key") == "" ]]; then
-      insert "/home/$USER/$FLUX_DIR/config/userconfig.js" "testnet" "  $key: $value,"
+  if [[ $(cat $FLUXOS_PATH/config/userconfig.js | grep "$key") == "" ]]; then
+      insert "$FLUXOS_PATH/config/userconfig.js" "testnet" "  $key: $value,"
       padding "${ARROW}${GREEN} [FluxOS] ${CYAN}$3${NC}" "${CHECK_MARK}"
       return
   fi
 }
 
 function ImportBlockedRepository() {
-  string=$(grep "blockedRepositories" $HOME/$FLUX_DIR/config/userconfig.js |  awk -F'[][]' '{print $2}' )
+  string=$(grep "blockedRepositories" $FLUXOS_PATH/config/userconfig.js |  awk -F'[][]' '{print $2}' )
   delimiter=","
   declare -a array=($(echo $string | tr "$delimiter" " "))
   sorted_unique_ids=($(echo "${array[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' '))
@@ -405,10 +425,10 @@ function blocked_repositories(){
 }
 
 function fluxosConfigBackup(){
-  ConfigFile="/home/$USER/$FLUX_DIR/config/userconfig.js"
+  ConfigFile="$FLUXOS_PATH/config/userconfig.js"
   if [[ -f $ConfigFile ]]; then
-    cp -nf $ConfigFile $HOME/userconfig.js.backup
-    if [[ -f $HOME/userconfig.js.backup ]]; then
+    cp -nf $ConfigFile $DATA_PATH/userconfig.js.backup
+    if [[ -f $DATA_PATH/userconfig.js.backup ]]; then
       padding "${ARROW}${GREEN} [FluxOS] ${CYAN}FluxOs userconfig.js backup successfully${NC}" "${CHECK_MARK}"
     else
       padding "${ARROW}${GREEN} [FluxOS] ${CYAN}FluxOs userconfig.js backup failed${NC}" "${X_MARK}"
@@ -419,10 +439,10 @@ function fluxosConfigBackup(){
 }
 
 function fluxosConfigRestore(){
-  ConfigFile="/home/$USER/$FLUX_DIR/config/userconfig.js"
-  if [[ -d /home/$USER/$FLUX_DIR ]]; then
-    if [[ -f $HOME/userconfig.js.backup ]]; then 
-      cp -nf $HOME/userconfig.js.backup $ConfigFile
+  ConfigFile="$FLUXOS_PATH/config/userconfig.js"
+  if [[ -d $FLUXOS_PATH ]]; then
+    if [[ -f $DATA_PATH/userconfig.js.backup ]]; then 
+      cp -nf $DATA_PATH/userconfig.js.backup $ConfigFile
       if [[ -f $ConfigFile ]]; then
         padding "${ARROW}${GREEN} [FluxOS] ${CYAN}FluxOs userconfig.js restored successfully${NC}" "${CHECK_MARK}"
       else
@@ -451,7 +471,7 @@ function config_builder() {
        value="\'kadena:$2?chainid=0\'"
      fi
     fi
-    if [[ ! -f /home/$USER/$FLUX_DIR/config/userconfig.js ]]; then
+    if [[ ! -f $FLUXOS_PATH/config/userconfig.js ]]; then
      padding "${ARROW}${GREEN} [FluxOS] ${CYAN}Config file does not exist...${NC}" "${X_MARK}"
      return
     fi
@@ -459,24 +479,24 @@ function config_builder() {
      padding "${ARROW}${GREEN} [FluxOS] ${CYAN}Empty key/value skipped${NC}" "${X_MARK}"
      return
     fi
-    if [[ $(cat /home/$USER/$FLUX_DIR/config/userconfig.js | grep "$key") == "" ]]; then
-        insert "/home/$USER/$FLUX_DIR/config/userconfig.js" "testnet" "    $key: $value,"
+    if [[ $(cat $FLUXOS_PATH/config/userconfig.js | grep "$key") == "" ]]; then
+        insert "$FLUXOS_PATH/config/userconfig.js" "testnet" "    $key: $value,"
         padding "${ARROW}${GREEN} [FluxOS] ${CYAN}$3 added successfully${NC}" "${CHECK_MARK}"
         return
     fi
-    if [[ $(cat /home/$USER/$FLUX_DIR/config/userconfig.js | grep "$key" | grep "$value_check") != "" ]]; then
+    if [[ $(cat $FLUXOS_PATH/config/userconfig.js | grep "$key" | grep "$value_check") != "" ]]; then
      padding "${ARROW}${GREEN} [FluxOS] ${CYAN}$3 skipped${NC}" "${X_MARK}"
      return
     fi
-    if [[ $(cat /home/$USER/$FLUX_DIR/config/userconfig.js | grep "$key") != "" ]]; then
+    if [[ $(cat $FLUXOS_PATH/config/userconfig.js | grep "$key") != "" ]]; then
       RemoveLine "$key"
-      insert "/home/$USER/$FLUX_DIR/config/userconfig.js" "testnet" "    $key: $value,"
+      insert "$FLUXOS_PATH/config/userconfig.js" "testnet" "    $key: $value,"
       padding "${ARROW}${GREEN} [FluxOS] ${CYAN}$3 changed successfully${NC}" "${CHECK_MARK}"
     fi
   fi
   #####################################################
   if [[ "$4" == "daemon" ]]; then
-    if [[ ! -f /home/$USER/$CONFIG_DIR/$CONFIG_FILE ]]; then
+    if [[ ! -f $FLUX_DAEMON_PATH/$CONFIG_FILE ]]; then
        padding "${ARROW}${GREEN} [Daemon] ${CYAN}Config file does not exist...${NC}" "${X_MARK}"
        return
     fi
@@ -484,19 +504,19 @@ function config_builder() {
        padding "${ARROW}${GREEN} [Daemon] ${CYAN}Empty key/value skipped${NC}" "${X_MARK}"
        return
     fi
-    if [[ ! $(grep -w $1 /home/$USER/$CONFIG_DIR/$CONFIG_FILE) && -f /home/$USER/$CONFIG_DIR/$CONFIG_FILE ]]; then
-      echo "$1=$2" >> /home/$USER/$CONFIG_DIR/$CONFIG_FILE
-      if [[ "$1=$2" == $(grep -w $1 /home/$USER/$CONFIG_DIR/$CONFIG_FILE) ]]; then
+    if [[ ! $(grep -w $1 $FLUX_DAEMON_PATH/$CONFIG_FILE) && -f $FLUX_DAEMON_PATH/$CONFIG_FILE ]]; then
+      echo "$1=$2" >> $FLUX_DAEMON_PATH/$CONFIG_FILE
+      if [[ "$1=$2" == $(grep -w $1 $FLUX_DAEMON_PATH/$CONFIG_FILE) ]]; then
          padding "${ARROW}${GREEN} [Daemon] ${CYAN}$3 added successfully${NC}" "${CHECK_MARK}"
 	 return
       fi
     fi
-    if [[ "$1=$2" == $(grep -w $1 /home/$USER/$CONFIG_DIR/$CONFIG_FILE) ]]; then
+    if [[ "$1=$2" == $(grep -w $1 $FLUX_DAEMON_PATH/$CONFIG_FILE) ]]; then
         padding "${ARROW}${GREEN} [Daemon] ${CYAN}$3 skipped${NC}" "${X_MARK}"
 	return
     else
-       sed -i "s/$(grep -e $1 /home/$USER/$CONFIG_DIR/$CONFIG_FILE)/$1=$2/" /home/$USER/$CONFIG_DIR/$CONFIG_FILE
-       if [[ "$1=$2" == $(grep -w $1 /home/$USER/$CONFIG_DIR/$CONFIG_FILE) ]]; then
+       sed -i "s/$(grep -e $1 $FLUX_DAEMON_PATH/$CONFIG_FILE)/$1=$2/" $FLUX_DAEMON_PATH/$CONFIG_FILE
+       if [[ "$1=$2" == $(grep -w $1 $FLUX_DAEMON_PATH/$CONFIG_FILE) ]]; then
          padding "${ARROW}${GREEN} [Daemon] ${CYAN}$3 replaced successfully${NC}" "${CHECK_MARK}"
        fi
     fi
@@ -507,33 +527,33 @@ function config_builder() {
        padding "${ARROW}${GREEN} [BenchD] ${CYAN}Empty key/value skipped${NC}" "${X_MARK}"
        return
     fi
-    if [[ ! -f /home/$USER/.fluxbenchmark/fluxbench.conf ]]; then
-      mkdir -p /home/$USER/.fluxbenchmark > /dev/null 2>&1
-      echo "$1=$2" >> /home/$USER/.fluxbenchmark/fluxbench.conf
-      if [[ "$1=$2" == $(grep -w $1 /home/$USER/.fluxbenchmark/fluxbench.conf) ]]; then
+    if [[ ! -f "$FLUX_BENCH_PATH/fluxbench.conf" ]]; then
+      mkdir -p $FLUX_BENCH_PATH > /dev/null 2>&1
+      echo "$1=$2" >> $FLUX_BENCH_PATH/fluxbench.conf
+      if [[ "$1=$2" == $(grep -w $1 $FLUX_BENCH_PATH/fluxbench.conf) ]]; then
          padding "${ARROW}${GREEN} [BenchD] ${CYAN}$3 added successfully${NC}" "${CHECK_MARK}"
 	 return
       fi
     fi
-    if [[ ! $(grep -w $1 /home/$USER/.fluxbenchmark/fluxbench.conf) ]]; then
-      echo "$1=$2" >> /home/$USER/.fluxbenchmark/fluxbench.conf
-      if [[ "$1=$2" == $(grep -w $1 /home/$USER/.fluxbenchmark/fluxbench.conf) ]]; then
+    if [[ ! $(grep -w $1 $FLUX_BENCH_PATH/fluxbench.conf) ]]; then
+      echo "$1=$2" >> $FLUX_BENCH_PATH/fluxbench.conf
+      if [[ "$1=$2" == $(grep -w $1 $FLUX_BENCH_PATH/fluxbench.conf) ]]; then
          padding "${ARROW}${GREEN} [BenchD] ${CYAN}$3 added successfully${NC}" "${CHECK_MARK}"
 	 return
       fi
     fi
-    if [[ "$1=$2" == $(grep -w $1 /home/$USER/.fluxbenchmark/fluxbench.conf) ]]; then
+    if [[ "$1=$2" == $(grep -w $1 $FLUX_BENCH_PATH/fluxbench.conf) ]]; then
         padding "${ARROW}${GREEN} [BenchD] ${CYAN}$3 skipped${NC}" "${X_MARK}"
     else
-       sed -i "s/$(grep -e $1 /home/$USER/.fluxbenchmark/fluxbench.conf)/$1=$2/" /home/$USER/.fluxbenchmark/fluxbench.conf
-       if [[ "$1=$2" == $(grep -w $1 /home/$USER/.fluxbenchmark/fluxbench.conf) ]]; then
+       sed -i "s/$(grep -e $1 $FLUX_BENCH_PATH/fluxbench.conf)/$1=$2/" $FLUX_BENCH_PATH/fluxbench.conf
+       if [[ "$1=$2" == $(grep -w $1 $FLUX_BENCH_PATH/fluxbench.conf) ]]; then
          padding "${ARROW}${GREEN} [BenchD] ${CYAN}$3 replaced successfully${NC}" "${CHECK_MARK}"
        fi
     fi
   fi
   ###################################################
   if [[ "$4" == "watchdog" ]]; then
-   if [[ ! -f /home/$USER/watchdog/config.js ]]; then
+   if [[ ! -f "$FLUX_WATCHDOG_PATH/config.js" ]]; then
        padding "${ARROW}${GREEN} [WatchD] ${CYAN}Config file does not exist...${NC}" "${X_MARK}"
        return
    fi
@@ -541,13 +561,13 @@ function config_builder() {
        padding "${ARROW}${GREEN} [WatchD] ${CYAN}Empty key/value skipped${NC}" "${X_MARK}"
        return
     fi
-    if [[ $(cat /home/$USER/watchdog/config.js | grep "$1: '$2'") != "" ]]; then
+    if [[ $(cat $FLUX_WATCHDOG_PATH/config.js | grep "$1: '$2'") != "" ]]; then
        padding "${ARROW}${GREEN} [WatchD] ${CYAN}$3 skipped${NC}" "${X_MARK}"
        return
     fi
-    if [[ $(cat /home/$USER/watchdog/config.js | grep "$1") != "" ]]; then
-      sed -i "s/$(grep -e $1 /home/$USER/watchdog/config.js)/  $1: '$2',/" /home/$USER/watchdog/config.js
-      if [[ $(grep -w $2 /home/$USER/watchdog/config.js) != "" ]]; then
+    if [[ $(cat $FLUX_WATCHDOG_PATH/config.js | grep "$1") != "" ]]; then
+      sed -i "s/$(grep -e $1 $FLUX_WATCHDOG_PATH/config.js)/  $1: '$2',/" $FLUX_WATCHDOG_PATH/config.js
+      if [[ $(grep -w $2 $FLUX_WATCHDOG_PATH/config.js) != "" ]]; then
         padding "${ARROW}${GREEN} [WatchD] ${CYAN}$3 replaced successfully${NC}" "${CHECK_MARK}"
       fi
     fi
@@ -579,7 +599,7 @@ function smart_reconfiguration(){
 END
 )
 
- install_settings=($(jq -r 'keys | @sh' install_conf.json))
+ install_settings=($(jq -r 'keys | @sh' $DATA_PATH/install_conf.json))
  for i in "${install_settings[@]}"
  do
 
@@ -596,204 +616,191 @@ END
 
    if [[ $(echo ${daemon_settings_list[@]} | grep -ow "$key" | wc -l)  == "1" ]]; then
      config="daemon"
-     value=$(jq -r .$install_key install_conf.json)
+     value=$(jq -r .$install_key $DATA_PATH/install_conf.json)
      config_builder "$key" "$value" "$label" "$config"
    fi
 
    if [[ $(echo ${benchmark_settings_list[@]} | grep -ow "$key" | wc -l)  == "1" ]]; then
      config="benchmark"
-     value=$(jq -r .$install_key install_conf.json)
+     value=$(jq -r .$install_key $DATA_PATH/install_conf.json)
      config_builder "$key" "$value" "$label" "$config"
    fi
 
    if [[ $(echo ${fluxos_settings_list[@]} | grep -ow "$key" | wc -l)  == "1" ]]; then
      config="fluxos"
-     value=$(jq -r .$install_key install_conf.json)
+     value=$(jq -r .$install_key $DATA_PATH/install_conf.json)
      config_builder "$key" "$value" "$label" "$config"
    fi
 
    if [[ $(echo ${watchdog_settings_list[@]} | grep -ow "$key" | wc -l)  == "1" ]]; then
      config="watchdog"
-     value=$(jq -r .$install_key install_conf.json)
+     value=$(jq -r .$install_key $DATA_PATH/install_conf.json)
      config_builder "$key" "$value" "$label" "$config"
    fi
  done
 }
 
 function smart_install_conf(){
-
-        if [[ "$3" == "import" ]]; then
+  if [[ "$3" == "import" ]]; then
 	  return
 	fi
-	
-        if [[ ! -f /home/$USER/install_conf.json ]]; then
-                echo "{}" >| install_conf.json
-        fi
-        echo "$(jq -r --arg key "$1" --arg value "$2" '.[$key]=$value' install_conf.json)" >| install_conf.json
+  if [[ ! -f $DATA_PATH/install_conf.json ]]; then
+    echo "{}" >| $DATA_PATH/install_conf.json
+  fi
+  echo "$(jq -r --arg key "$1" --arg value "$2" '.[$key]=$value' install_conf.json)" >| $DATA_PATH/install_conf.json
 }
 
 function config_smart_create() {
-
-        if [[ "$1" != "import" ]]; then
-          rm -rf /home/$USER/install_conf.json
+  if [[ "$1" != "import" ]]; then
+    rm -rf $DATA_PATH/install_conf.json
 	fi
-        #daemon
-        if [[ -f /home/$USER/$CONFIG_DIR/$CONFIG_FILE ]]; then
-                echo -e ""
-                echo -e "${ARROW} ${YELLOW}Imported daemon settings:${NC}"
-                zelnodeprivkey=$(grep -w zelnodeprivkey /home/$USER/$CONFIG_DIR/$CONFIG_FILE | sed -e 's/zelnodeprivkey=//' | sed 's/ //g')
-                echo -e "${PIN}${CYAN} Identity Key = ${GREEN}$zelnodeprivkey${NC}"
-                smart_install_conf "prvkey" "$zelnodeprivkey" "$1"
-                zelnodeoutpoint=$(grep -w zelnodeoutpoint /home/$USER/$CONFIG_DIR/$CONFIG_FILE | sed -e 's/zelnodeoutpoint=//' | sed 's/ //g')
-                echo -e "${PIN}${CYAN} Collateral TX ID = ${GREEN}$zelnodeoutpoint${NC}"
-                smart_install_conf "outpoint" "$zelnodeoutpoint" "$1"
-                zelnodeindex=$(grep -w zelnodeindex /home/$USER/$CONFIG_DIR/$CONFIG_FILE | sed -e 's/zelnodeindex=//' | sed 's/ //g')
-                echo -e "${PIN}${CYAN} Output Index = ${GREEN}$zelnodeindex${NC}"
-                smart_install_conf "index" "$zelnodeindex" "$1"
-        fi
+  #daemon
+  if [[ -f $FLUX_DAEMON_PATH/$CONFIG_FILE ]]; then
+    echo -e ""
+    echo -e "${ARROW} ${YELLOW}Imported daemon settings:${NC}"
+    zelnodeprivkey=$(grep -w zelnodeprivkey  $FLUX_DAEMON_PATH/$CONFIG_FILE | sed -e 's/zelnodeprivkey=//' | sed 's/ //g')
+    echo -e "${PIN}${CYAN} Identity Key = ${GREEN}$zelnodeprivkey${NC}"
+    smart_install_conf "prvkey" "$zelnodeprivkey" "$1"
+    zelnodeoutpoint=$(grep -w zelnodeoutpoint  $FLUX_DAEMON_PATH/$CONFIG_FILE | sed -e 's/zelnodeoutpoint=//' | sed 's/ //g')
+    echo -e "${PIN}${CYAN} Collateral TX ID = ${GREEN}$zelnodeoutpoint${NC}"
+    smart_install_conf "outpoint" "$zelnodeoutpoint" "$1"
+    zelnodeindex=$(grep -w zelnodeindex  $FLUX_DAEMON_PATH/$CONFIG_FILE | sed -e 's/zelnodeindex=//' | sed 's/ //g')
+    echo -e "${PIN}${CYAN} Output Index = ${GREEN}$zelnodeindex${NC}"
+    smart_install_conf "index" "$zelnodeindex" "$1"
+  fi
 	#Benchmark
-	if [[ -f /home/$USER/.fluxbenchmark/fluxbench.conf ]]; then
-	   echo -e ""
-           echo -e "${ARROW} ${YELLOW}Imported Benchmark settings:${NC}"
-	   thunder=$(grep -Po "(?<=thunder=)\d+" /home/$USER/.fluxbenchmark/fluxbench.conf)
-	   if [[ "$thunder" == "1" ]]; then
-             echo -e "${PIN}${CYAN} Thunder Mode = ${GREEN}ENABLED${NC}"
-             smart_install_conf "thunder" "$thunder" "$1"
-           fi
-	   speedtestserverid=$(grep -Po "(?<=speedtestserverid=)\d+" /home/$USER/.fluxbenchmark/fluxbench.conf)
-	   if [[ "$speedtestserverid" != "" ]]; then
-             echo -e "${PIN}${CYAN} SpeedTest Server ID = ${GREEN}$speedtestserverid${NC}"
-             smart_install_conf "speedtestserverid" "$speedtestserverid" "$1"
-           fi
-	   fluxport=$(grep -Po "(?<=fluxport=)\d+" /home/$USER/.fluxbenchmark/fluxbench.conf)  
-	   if [[ "$fluxport" != "" ]]; then
-             upnp_enabled=true
-             echo -e "${PIN}${CYAN} Flux Port = ${GREEN}$fluxport${NC}"
-             smart_install_conf "fluxport" "$fluxport" "$1"
-             smart_install_conf "upnp_enabled" "$upnp_enabled" "$1"
-      fi 
+	if [[ -f $FLUX_BENCH_PATH/fluxbench.conf ]]; then
+	  echo -e ""
+    echo -e "${ARROW} ${YELLOW}Imported Benchmark settings:${NC}"
+	  thunder=$(grep -Po "(?<=thunder=)\d+" $FLUX_BENCH_PATH/fluxbench.conf)
+	  if [[ "$thunder" == "1" ]]; then
+      echo -e "${PIN}${CYAN} Thunder Mode = ${GREEN}ENABLED${NC}"
+      smart_install_conf "thunder" "$thunder" "$1"
+    fi
+	  speedtestserverid=$(grep -Po "(?<=speedtestserverid=)\d+" $FLUX_BENCH_PATH/fluxbench.conf)
+	  if [[ "$speedtestserverid" != "" ]]; then
+      echo -e "${PIN}${CYAN} SpeedTest Server ID = ${GREEN}$speedtestserverid${NC}"
+      smart_install_conf "speedtestserverid" "$speedtestserverid" "$1"
+    fi
+	  fluxport=$(grep -Po "(?<=fluxport=)\d+" $FLUX_BENCH_PATH/fluxbench.conf)  
+	  if [[ "$fluxport" != "" ]]; then
+      upnp_enabled=true
+      echo -e "${PIN}${CYAN} Flux Port = ${GREEN}$fluxport${NC}"
+      smart_install_conf "fluxport" "$fluxport" "$1"
+      smart_install_conf "upnp_enabled" "$upnp_enabled" "$1"
+    fi 
 	fi
-        #fluxOS
-        if [[ -f /home/$USER/$FLUX_DIR/config/userconfig.js ]]; then
-                echo -e ""
-                echo -e "${ARROW} ${YELLOW}Imported fluxOS settings:${NC}"
-                ZELID=$(grep -w zelid /home/$USER/$FLUX_DIR/config/userconfig.js | sed -e 's/.*zelid: .//' | sed -e 's/.\{2\}$//')
-                if [[ "$ZELID" != "" ]]; then
-                        echo -e "${PIN}${CYAN} Zel ID = ${GREEN}$ZELID${NC}"
-                        smart_install_conf "zelid" "$ZELID" "$1"
-                fi
-                KDA_A=$(grep -w kadena /home/$USER/$FLUX_DIR/config/userconfig.js | sed -e 's/.*kadena: .//' | sed -e 's/.\{2\}$//')
-                if [[ "$KDA_A" != "" ]]; then
-                        echo -e "${PIN}${CYAN} KDA address = ${GREEN}$KDA_A${NC}"
-                        smart_install_conf "kda_address" "$KDA_A" "$1"
-                fi
-                upnp_port=$(grep -w apiport /home/$USER/$FLUX_DIR/config/userconfig.js | grep -o '[[:digit:]]*')
-                if [[ "$upnp_port" != "" ]]; then
-                        gateway_ip=$(ip rout | head -n1 | awk '{print $3}' 2>/dev/null)
-                        echo -e "${PIN}${CYAN} API Port = ${GREEN}$upnp_port${NC}"
-                        if [[ "$upnp_enabled" == "true" ]]; then
-                          echo -e "${PIN}${CYAN} Router IP = ${GREEN}$gateway_ip${NC}"
-                        fi
-                        smart_install_conf "upnp_port" "$upnp_port" "$1"
-                        smart_install_conf "gateway_ip" "$gateway_ip" "$1"
-                fi
-                
-        fi
-        #watchdog
-        if [[ -f /home/$USER/watchdog/config.js ]]; then
-                echo -e ""
-                echo -e "${ARROW} ${YELLOW}Imported watchdog settings:${NC}"
-                node_label=$(grep -w label /home/$USER/watchdog/config.js | sed -e 's/.*label: .//' | sed -e 's/.\{2\}$//')
-                if [[ "$node_label" != "" && "$node_label" != "0" ]]; then
-                        echo -e "${PIN}${CYAN} Label = ${GREEN}$node_label${NC}"
-                        smart_install_conf "node_label" "$node_label" "$1"
-                else
-                        echo -e "${PIN}${CYAN} Label = ${RED}Disabled${NC}"
-                fi
-
-                eps_limit=$(grep -w tier_eps_min /home/$USER/watchdog/config.js | sed -e 's/.*tier_eps_min: .//' | sed -e 's/.\{2\}$//')
-                if [[ "$eps_limit" != "" && "$eps_limit" != "0" ]]; then
-                        echo -e "${PIN}${CYAN} Tier_eps_min = ${GREEN}$eps_limit${NC}"
-                        smart_install_conf "eps_limit" "$eps_limit" "$1"
-                fi
-
-                discord=$(grep -w web_hook_url /home/$USER/watchdog/config.js | sed -e 's/.*web_hook_url: .//' | sed -e 's/.\{2\}$//')
-                if [[ "$discord" != "" && "$discord" != "0" ]]; then
-                        echo -e "${PIN}${CYAN} Discord alert = ${GREEN}Enabled${NC}"
-                        smart_install_conf "discord" "$discord" "$1"
-                else
-                        echo -e "${PIN}${CYAN} Discord alert = ${RED}Disabled${NC}"
-                fi
-                ping=$(grep -w ping /home/$USER/watchdog/config.js | sed -e 's/.*ping: .//' | sed -e 's/.\{2\}$//')
-                if [[ "$ping" != "" && "$ping" != "0" ]]; then
-                        if [[ "$discord" != "" && "$discord" != "0" ]]; then
-                                echo -e "${PIN}${CYAN} Discord nick ping = ${GREEN}Enabled${NC}"
-                                smart_install_conf "ping" "$ping" "$1"
-                        else
-                                echo -e "${PIN}${CYAN} Discord nick ping = ${RED}Disabled${NC}"
-                        fi
-                fi
-                telegram_alert=$(grep -w telegram_alert /home/$USER/watchdog/config.js | sed -e 's/.*telegram_alert: .//' | sed -e 's/.\{2\}$//')
-                if [[ "$telegram_alert" != "" && "$telegram_alert" != "0" ]]; then
-                        echo -e "${PIN}${CYAN} Telegram alert = ${GREEN}Enabled${NC}"
-                        smart_install_conf "telegram_alert" "$telegram_alert" "$1"
-                else
-                        echo -e "${PIN}${CYAN} Telegram alert = ${RED}Disabled${NC}"
-                        smart_install_conf "telegram_alert" "0" "$1"
-                fi
-
-                telegram_bot_token=$(grep -w telegram_bot_token /home/$USER/watchdog/config.js | sed -e 's/.*telegram_bot_token: .//' | sed -e 's/.\{2\}$//')
-                if [[ "$telegram_alert" == "1" ]]; then
-                        echo -e "${PIN}${CYAN} Telegram bot token = ${GREEN}$telegram_bot_token${NC}"
-                        smart_install_conf "telegram_bot_token" "$telegram_bot_token" "$1"
-                fi
-
-                telegram_chat_id=$(grep -w telegram_chat_id /home/$USER/watchdog/config.js | sed -e 's/.*telegram_chat_id: .//' | sed -e 's/.\{1\}$//')
-                if [[ "$telegram_alert" == "1" ]]; then
-                        echo -e "${PIN}${CYAN} Telegram chat id = ${GREEN}$telegram_chat_id${NC}"
-                        smart_install_conf "telegram_chat_id" "$telegram_chat_id" "$1"
-                fi
-
-                zelflux_update=$(grep -w zelflux_update /home/$USER/watchdog/config.js | sed -e 's/.*zelflux_update: .//' | egrep -o '[0-9]')
-                if [[ "$zelflux_update" == "1" ]]; then
-                        echo -e "${PIN}${CYAN} FluxOS auto update = ${GREEN}Enabled${NC}"
-                        smart_install_conf "zelflux_update" "1" "$1"
-                else
-                       echo -e "${PIN}${CYAN} FluxOS auto update = ${GREEN}Disabled${NC}"
-                       smart_install_conf "zelflux_update" "0" "$1"
-                fi
-
-                zelcash_update=$(grep -w zelcash_update /home/$USER/watchdog/config.js | sed -e 's/.*zelcash_update: .//' | egrep -o '[0-9]')
-                if [[ "$zelcash_update" == "1" ]]; then
-                        echo -e "${PIN}${CYAN} Daemon auto update = ${GREEN}Enabled${NC}"
-                        smart_install_conf "zelcash_update" "1" "$1"
-                else
-                       echo -e "${PIN}${CYAN} Daemon auto update = ${GREEN}Disabled${NC}"
-                       smart_install_conf "zelcash_update" "0" "$1"
-                fi
-
-                zelbench_update=$(grep -w zelbench_update /home/$USER/watchdog/config.js | sed -e 's/.*zelbench_update: .//' | egrep -o '[0-9]')
-                if [[ "$zelbench_update" == "1" ]]; then
-                        echo -e "${PIN}${CYAN} Benchmark auto update = ${GREEN}Enabled${NC}"
-                        smart_install_conf "zelbench_update" "1" "$1"
-                else
-                       echo -e "${PIN}${CYAN} Benchmark auto update = ${GREEN}Disabled${NC}"
-                       smart_install_conf "zelbench_update" "0" "$1"
-                fi
-
-                action=$(grep -w action /home/$USER/watchdog/config.js | sed -e 's/.*action: .//' | egrep -o '[0-9]')
-                if [[ "$action" == "1" ]]; then
-                        echo -e "${PIN}${CYAN} Fix action = ${GREEN}Enabled${NC}"
-                        smart_install_conf "action" "1" "$1"
-                else
-                       echo -e "${PIN}${CYAN} Fix action  = ${GREEN}Disabled${NC}"
-                       smart_install_conf "action" "0" "$1"
-                fi
-        fi
-
+  #fluxOS
+  if [[ -f $FLUXOS_PATH/config/userconfig.js ]]; then
+    echo -e ""
+    echo -e "${ARROW} ${YELLOW}Imported fluxOS settings:${NC}"
+    ZELID=$(grep -w zelid $FLUXOS_PATH/config/userconfig.js | sed -e 's/.*zelid: .//' | sed -e 's/.\{2\}$//')
+    if [[ "$ZELID" != "" ]]; then
+      echo -e "${PIN}${CYAN} Zel ID = ${GREEN}$ZELID${NC}"
+      smart_install_conf "zelid" "$ZELID" "$1"
+    fi
+    KDA_A=$(grep -w kadena $FLUXOS_PATH/config/userconfig.js | sed -e 's/.*kadena: .//' | sed -e 's/.\{2\}$//')
+    if [[ "$KDA_A" != "" ]]; then
+      echo -e "${PIN}${CYAN} KDA address = ${GREEN}$KDA_A${NC}"
+      smart_install_conf "kda_address" "$KDA_A" "$1"
+    fi
+    upnp_port=$(grep -w apiport $FLUXOS_PATH/config/userconfig.js | grep -o '[[:digit:]]*')
+    if [[ "$upnp_port" != "" ]]; then
+      gateway_ip=$(ip rout | head -n1 | awk '{print $3}' 2>/dev/null)
+      echo -e "${PIN}${CYAN} API Port = ${GREEN}$upnp_port${NC}"
+      if [[ "$upnp_enabled" == "true" ]]; then
+        echo -e "${PIN}${CYAN} Router IP = ${GREEN}$gateway_ip${NC}"
+      fi
+      smart_install_conf "upnp_port" "$upnp_port" "$1"
+      smart_install_conf "gateway_ip" "$gateway_ip" "$1"
+    fi     
+  fi
+  #watchdog
+  if [[ -f $FLUX_WATCHDOG_PATH/config.js ]]; then
+    echo -e ""
+    echo -e "${ARROW} ${YELLOW}Imported watchdog settings:${NC}"
+    node_label=$(grep -w label $FLUX_WATCHDOG_PATH/config.js | sed -e 's/.*label: .//' | sed -e 's/.\{2\}$//')
+    if [[ "$node_label" != "" && "$node_label" != "0" ]]; then
+      echo -e "${PIN}${CYAN} Label = ${GREEN}$node_label${NC}"
+      smart_install_conf "node_label" "$node_label" "$1"
+    else
+      echo -e "${PIN}${CYAN} Label = ${RED}Disabled${NC}"
+    fi
+    eps_limit=$(grep -w tier_eps_min $FLUX_WATCHDOG_PATH/config.js | sed -e 's/.*tier_eps_min: .//' | sed -e 's/.\{2\}$//')
+    if [[ "$eps_limit" != "" && "$eps_limit" != "0" ]]; then
+      echo -e "${PIN}${CYAN} Tier_eps_min = ${GREEN}$eps_limit${NC}"
+      smart_install_conf "eps_limit" "$eps_limit" "$1"
+    fi
+    discord=$(grep -w web_hook_url $FLUX_WATCHDOG_PATH/config.js | sed -e 's/.*web_hook_url: .//' | sed -e 's/.\{2\}$//')
+    if [[ "$discord" != "" && "$discord" != "0" ]]; then
+      echo -e "${PIN}${CYAN} Discord alert = ${GREEN}Enabled${NC}"
+      smart_install_conf "discord" "$discord" "$1"
+    else
+      echo -e "${PIN}${CYAN} Discord alert = ${RED}Disabled${NC}"
+    fi
+    ping=$(grep -w ping $FLUX_WATCHDOG_PATH/config.js | sed -e 's/.*ping: .//' | sed -e 's/.\{2\}$//')
+    if [[ "$ping" != "" && "$ping" != "0" ]]; then
+      if [[ "$discord" != "" && "$discord" != "0" ]]; then
+        echo -e "${PIN}${CYAN} Discord nick ping = ${GREEN}Enabled${NC}"
+        smart_install_conf "ping" "$ping" "$1"
+      else
+        echo -e "${PIN}${CYAN} Discord nick ping = ${RED}Disabled${NC}"
+      fi
+    fi
+    telegram_alert=$(grep -w telegram_alert $FLUX_WATCHDOG_PATH/config.js | sed -e 's/.*telegram_alert: .//' | sed -e 's/.\{2\}$//')
+    if [[ "$telegram_alert" != "" && "$telegram_alert" != "0" ]]; then
+      echo -e "${PIN}${CYAN} Telegram alert = ${GREEN}Enabled${NC}"
+      smart_install_conf "telegram_alert" "$telegram_alert" "$1"
+    else
+      echo -e "${PIN}${CYAN} Telegram alert = ${RED}Disabled${NC}"
+      smart_install_conf "telegram_alert" "0" "$1"
+    fi
+    telegram_bot_token=$(grep -w telegram_bot_token $FLUX_WATCHDOG_PATH/config.js | sed -e 's/.*telegram_bot_token: .//' | sed -e 's/.\{2\}$//')
+    if [[ "$telegram_alert" == "1" ]]; then
+      echo -e "${PIN}${CYAN} Telegram bot token = ${GREEN}$telegram_bot_token${NC}"
+      smart_install_conf "telegram_bot_token" "$telegram_bot_token" "$1"
+    fi
+    telegram_chat_id=$(grep -w telegram_chat_id $FLUX_WATCHDOG_PATH/config.js | sed -e 's/.*telegram_chat_id: .//' | sed -e 's/.\{1\}$//')
+    if [[ "$telegram_alert" == "1" ]]; then
+      echo -e "${PIN}${CYAN} Telegram chat id = ${GREEN}$telegram_chat_id${NC}"
+      smart_install_conf "telegram_chat_id" "$telegram_chat_id" "$1"
+    fi
+    zelflux_update=$(grep -w zelflux_update $FLUX_WATCHDOG_PATH/config.js | sed -e 's/.*zelflux_update: .//' | egrep -o '[0-9]')
+    if [[ "$zelflux_update" == "1" ]]; then
+      echo -e "${PIN}${CYAN} FluxOS auto update = ${GREEN}Enabled${NC}"
+      smart_install_conf "zelflux_update" "1" "$1"
+    else
+      echo -e "${PIN}${CYAN} FluxOS auto update = ${GREEN}Disabled${NC}"
+      smart_install_conf "zelflux_update" "0" "$1"
+    fi
+    zelcash_update=$(grep -w zelcash_update $FLUX_WATCHDOG_PATH/config.js | sed -e 's/.*zelcash_update: .//' | egrep -o '[0-9]')
+    if [[ "$zelcash_update" == "1" ]]; then
+      echo -e "${PIN}${CYAN} Daemon auto update = ${GREEN}Enabled${NC}"
+      smart_install_conf "zelcash_update" "1" "$1"
+    else
+      echo -e "${PIN}${CYAN} Daemon auto update = ${GREEN}Disabled${NC}"
+      smart_install_conf "zelcash_update" "0" "$1"
+    fi
+    zelbench_update=$(grep -w zelbench_update $FLUX_WATCHDOG_PATH/config.js | sed -e 's/.*zelbench_update: .//' | egrep -o '[0-9]')
+    if [[ "$zelbench_update" == "1" ]]; then
+      echo -e "${PIN}${CYAN} Benchmark auto update = ${GREEN}Enabled${NC}"
+      smart_install_conf "zelbench_update" "1" "$1"
+    else
+      echo -e "${PIN}${CYAN} Benchmark auto update = ${GREEN}Disabled${NC}"
+      smart_install_conf "zelbench_update" "0" "$1"
+    fi
+    action=$(grep -w action $FLUX_WATCHDOG_PATH/config.js | sed -e 's/.*action: .//' | egrep -o '[0-9]')
+    if [[ "$action" == "1" ]]; then
+      echo -e "${PIN}${CYAN} Fix action = ${GREEN}Enabled${NC}"
+      smart_install_conf "action" "1" "$1"
+    else
+      echo -e "${PIN}${CYAN} Fix action  = ${GREEN}Disabled${NC}"
+      smart_install_conf "action" "0" "$1"
+    fi
+  fi
 	echo -e ""
 	if [[ "$1" != "import" ]]; then
-	  echo -e "${HOT}${CYAN} Config file created, path: ${GREEN}/home/$USER/install_conf.json${NC}"
+	  echo -e "${HOT}${CYAN} Config file created, path: ${GREEN}$DATA_PATH/install_conf.json${NC}"
 	  echo -e ""
 	fi
 }
@@ -801,7 +808,7 @@ function config_smart_create() {
 function manual_build(){
 	skip_zelcash_config='0'
 	skip_bootstrap='0'
-	if [[ -d /home/$USER/$CONFIG_DIR ]]; then
+	if [[ -d $FLUX_DAEMON_PATH ]]; then
 		if whiptail --yesno "Would you like import old settings from daemon and Flux?" 8 65; then
 			import_settings='1'
 			skip_zelcash_config='1'
@@ -976,7 +983,6 @@ function manual_build(){
 			telegram_bot_token="0"
 			telegram_chat_id="0"
 		fi
-
 		index_from_file="$index"
 		tx_from_file="$outpoint"
 		stak_info=$(curl -sSL -m 5 https://$network_url_1/api/tx/$tx_from_file | jq -r ".vout[$index_from_file] | .value,.n,.scriptPubKey.addresses[0],.spentTxId" 2> /dev/null | paste - - - - | awk '{printf "%0.f %d %s %s\n",$1,$2,$3,$4}' | grep 'null' | egrep -o '1000|12500|40000')
@@ -1032,10 +1038,10 @@ function manual_build(){
 	swapon='1'
 	
 	if whiptail --yesno "Would you like enable thunder mode?" 8 60; then
-	     thunder='1'
-        fi
+	 thunder='1'
+  fi
 	
-	rm /home/$USER/install_conf.json > /dev/null 2>&1
+	rm $DATA_PATH/install_conf.json > /dev/null 2>&1
 	install_conf_create
 	config_file
 	echo -e    
@@ -1101,29 +1107,33 @@ function  fluxos_clean(){
  fi
 
   echo -e "${ARROW} ${CYAN}Removing syncthing...${NC}"
-  sudo pkill -9 syncthing > /dev/null 2>&1
-  sudo apt-get remove --purge syncthing -y > /dev/null 2>&1
-  sudo apt-get autoremove -y > /dev/null 2>&1
-   
-   if [[ $resource_check != 0 ]]; then
-     echo -e "${ARROW} ${CYAN}Unmounting locked FluxOS resource${NC}" && sleep 1
-     df | egrep 'flux' | awk '{ print $1}' |
-     while read line; do
-       sudo umount -l $line && sleep 1
-     done
-   fi
-   if [[ -d /home/$USER/zelflux/ZelApps && $(find /home/$USER/zelflux/ZelApps -maxdepth 1 -mindepth 1 -type d | wc -l) -gt 1 ]]; then
-     echo -e "${ARROW} ${CYAN}Cleaning FluxOS Apps directory...${NC}" && sleep 1
-     APPS_LIST=($(find /home/$USER/zelflux/ZelApps -maxdepth 1 -mindepth 1 -type d -printf '%P\n'))
-     LENGTH=${#APPS_LIST[@]}
-     for (( j=0; j<${LENGTH}; j++ ));
-     do
-       if [[ "${APPS_LIST[$j]}" != "ZelShare" && "${APPS_LIST[$j]}" != "" ]]; then
-         echo -e "${ARROW} ${CYAN}Apps directory removed, path: ${GREEN}/home/$USER/zelflux/ZelApps/${APPS_LIST[$j]}${NC}"
-         sudo rm -rf /home/$USER/zelflux/ZelApps/${APPS_LIST[$j]}
-       fi
-     done
-   fi
+	if [[ "$FLUXOS_VERSION" == "" ]]; then
+    sudo pkill -9 syncthing > /dev/null 2>&1
+    sudo apt-get remove --purge syncthing -y > /dev/null 2>&1
+    sudo apt-get autoremove -y > /dev/null 2>&1
+	else
+		sudo systemctl stop syncthing > /dev/null 2>&1
+	  sudo rm /dat/usr/lib/syncthing/config.xml > /dev/null 2>&1
+	fi
+  if [[ $resource_check != 0 ]]; then
+    echo -e "${ARROW} ${CYAN}Unmounting locked FluxOS resource${NC}" && sleep 1
+    df | egrep 'flux' | awk '{ print $1}' |
+    while read line; do
+      sudo umount -l $line && sleep 1
+    done
+  fi
+  if [[ -d $FLUXOS_PATH/ZelApps && $(find $FLUXOS_PATH/ZelApps -maxdepth 1 -mindepth 1 -type d | wc -l) -gt 1 ]]; then
+    echo -e "${ARROW} ${CYAN}Cleaning FluxOS Apps directory...${NC}" && sleep 1
+    APPS_LIST=($(find $FLUXOS_PATH/ZelApps -maxdepth 1 -mindepth 1 -type d -printf '%P\n'))
+    LENGTH=${#APPS_LIST[@]}
+    for (( j=0; j<${LENGTH}; j++ ));
+    do
+      if [[ "${APPS_LIST[$j]}" != "ZelShare" && "${APPS_LIST[$j]}" != "" ]]; then
+        echo -e "${ARROW} ${CYAN}Apps directory removed, path: ${GREEN}$FLUXOS_PATH/ZelApps/${APPS_LIST[$j]}${NC}"
+        sudo rm -rf $FLUXOS_PATH/ZelApps/${APPS_LIST[$j]}
+     fi
+    done
+  fi
 }
 
 function round() {
@@ -1291,36 +1301,36 @@ function status_loop() {
 }
 
 function import_config_file() {
-	if [[ -f /home/$USER/install_conf.json ]]; then
-		import_settings=$(cat /home/$USER/install_conf.json | jq -r '.import_settings')
+	if [[ -f $DATA_PATH/install_conf.json ]]; then
+		import_settings=$(cat $DATA_PATH/install_conf.json | jq -r '.import_settings')
 		#Daemon
-		bootstrap_url=$(cat /home/$USER/install_conf.json | jq -r '.bootstrap_url')
-		bootstrap_zip_del=$(cat /home/$USER/install_conf.json | jq -r '.bootstrap_zip_del')
-		use_old_chain=$(cat /home/$USER/install_conf.json | jq -r '.use_old_chain')
-		prvkey=$(cat /home/$USER/install_conf.json | jq -r '.prvkey')
-		outpoint=$(cat /home/$USER/install_conf.json | jq -r '.outpoint')
-		index=$(cat /home/$USER/install_conf.json | jq -r '.index')
+		bootstrap_url=$(cat $DATA_PATH/install_conf.json | jq -r '.bootstrap_url')
+		bootstrap_zip_del=$(cat $DATA_PATH/install_conf.json | jq -r '.bootstrap_zip_del')
+		use_old_chain=$(cat $DATA_PATH/install_conf.json | jq -r '.use_old_chain')
+		prvkey=$(cat $DATA_PATH/install_conf.json | jq -r '.prvkey')
+		outpoint=$(cat $DATA_PATH/install_conf.json | jq -r '.outpoint')
+		index=$(cat $DATA_PATH/install_conf.json | jq -r '.index')
 		#FluxOS
-		ZELID=$(cat /home/$USER/install_conf.json | jq -r '.zelid')
-		KDA_A=$(cat /home/$USER/install_conf.json | jq -r '.kda_address')
+		ZELID=$(cat $DATA_PATH/install_conf.json | jq -r '.zelid')
+		KDA_A=$(cat $DATA_PATH/install_conf.json | jq -r '.kda_address')
 		#Benchmark
-		thunder=$(cat /home/$USER/install_conf.json | jq -r '.thunder')
+		thunder=$(cat $DATA_PATH/install_conf.json | jq -r '.thunder')
 		#WatchDog
-		fix_action=$(cat /home/$USER/install_conf.json | jq -r '.action')
-		flux_update=$(cat /home/$USER/install_conf.json | jq -r '.zelflux_update')
-		daemon_update=$(cat /home/$USER/install_conf.json | jq -r '.zelcash_update')
-		bench_update=$(cat /home/$USER/install_conf.json | jq -r '.zelbench_update')
-		node_label=$(cat /home/$USER/install_conf.json | jq -r '.node_label')
-		eps_limit=$(cat /home/$USER/install_conf.json | jq -r '.eps_limit')
-		discord=$(cat /home/$USER/install_conf.json | jq -r '.discord')
-		ping=$(cat /home/$USER/install_conf.json | jq -r '.ping')
-		telegram_alert=$(cat /home/$USER/install_conf.json | jq -r '.telegram_alert')
-		telegram_bot_token=$(cat /home/$USER/install_conf.json | jq -r '.telegram_bot_token')
-		telegram_chat_id=$(cat /home/$USER/install_conf.json | jq -r '.telegram_chat_id')
+		fix_action=$(cat $DATA_PATH/install_conf.json | jq -r '.action')
+		flux_update=$(cat $DATA_PATH/install_conf.json | jq -r '.zelflux_update')
+		daemon_update=$(cat $DATA_PATH/install_conf.json | jq -r '.zelcash_update')
+		bench_update=$(cat $DATA_PATH/install_conf.json | jq -r '.zelbench_update')
+		node_label=$(cat $DATA_PATH/install_conf.json | jq -r '.node_label')
+		eps_limit=$(cat $DATA_PATH/install_conf.json | jq -r '.eps_limit')
+		discord=$(cat $DATA_PATH/install_conf.json | jq -r '.discord')
+		ping=$(cat $DATA_PATH/install_conf.json | jq -r '.ping')
+		telegram_alert=$(cat $DATA_PATH/install_conf.json | jq -r '.telegram_alert')
+		telegram_bot_token=$(cat $DATA_PATH/install_conf.json | jq -r '.telegram_bot_token')
+		telegram_chat_id=$(cat $DATA_PATH/install_conf.json | jq -r '.telegram_chat_id')
 		#UPnP
-    upnp_enabled=$(cat /home/$USER/install_conf.json | jq -r '.upnp_enabled')
-		upnp_port=$(cat /home/$USER/install_conf.json | jq -r '.upnp_port')
-		gateway_ip=$(cat /home/$USER/install_conf.json | jq -r '.gateway_ip')
+    upnp_enabled=$(cat $DATA_PATH/install_conf.json | jq -r '.upnp_enabled')
+		upnp_port=$(cat $DATA_PATH/install_conf.json | jq -r '.upnp_port')
+		gateway_ip=$(cat $DATA_PATH/install_conf.json | jq -r '.gateway_ip')
 		if [[ "$1" != "silent" ]]; then
 			echo -e ""
 			echo -e "${ARROW} ${YELLOW}Install config:"
@@ -1348,9 +1358,9 @@ function import_config_file() {
 			fi
 
 			if [[ ! -z "$gateway_ip" && ! -z "$upnp_port" ]]; then 
-			       if [[ "$upnp_port" != "null" ]]; then
-			         echo -e "${PIN}${CYAN} Enable UPnP configuration........................................[${CHECK_MARK}${CYAN}]${NC}" 
-			       fi
+        if [[ "$upnp_port" != "null" ]]; then
+          echo -e "${PIN}${CYAN} Enable UPnP configuration........................................[${CHECK_MARK}${CYAN}]${NC}" 
+        fi
 			fi
 
 			if [[ "$discord" != "" && "$discord" != "0" ]] || [[ "$telegram_alert" == '1' ]]; then
@@ -1360,10 +1370,11 @@ function import_config_file() {
 			fi
 			
 			if [[ "$thunder" == "1" ]]; then
-                                echo -e "${PIN}${CYAN} Enable thunder mode..............................................[${CHECK_MARK}${CYAN}]${NC}" && sleep 1
-                        fi
-                 fi
+       echo -e "${PIN}${CYAN} Enable thunder mode..............................................[${CHECK_MARK}${CYAN}]${NC}" && sleep 1
+      fi
+
     fi
+  fi
 }
 function get_ip() {
 	WANIP=$(curl --silent -m 15 https://api4.my-ip.io/ip | tr -dc '[:alnum:].')
@@ -1536,39 +1547,44 @@ function daemon_reconfiguration(){
 	sudo systemctl stop $COIN_NAME  > /dev/null 2>&1 && sleep 2
 	sudo fuser -k 16125/tcp > /dev/null 2>&1
 	if [[ "$zelnodeprivkey" != "" ]]; then
-		if [[ "zelnodeprivkey=$zelnodeprivkey" == $(grep -w zelnodeprivkey ~/$CONFIG_DIR/$CONFIG_FILE) ]]; then
+		if [[ "zelnodeprivkey=$zelnodeprivkey" == $(grep -w zelnodeprivkey $FLUX_DAEMON_PATH/$CONFIG_FILE) ]]; then
 			echo -e "${ARROW} ${CYAN}Replace FluxNode Identity Key skipped....................[${CHECK_MARK}${CYAN}]${NC}"
-					else
-					sed -i "s/$(grep -e zelnodeprivkey ~/$CONFIG_DIR/$CONFIG_FILE)/zelnodeprivkey=$zelnodeprivkey/" ~/$CONFIG_DIR/$CONFIG_FILE
-									if [[ "zelnodeprivkey=$zelnodeprivkey" == $(grep -w zelnodeprivkey ~/$CONFIG_DIR/$CONFIG_FILE) ]]; then
-													echo -e "${ARROW} ${CYAN}FluxNode Identity Key replaced successful................[${CHECK_MARK}${CYAN}]${NC}"			
-									fi
+    else
+      sed -i "s/$(grep -e zelnodeprivkey $FLUX_DAEMON_PATH/$CONFIG_FILE)/zelnodeprivkey=$zelnodeprivkey/" $FLUX_DAEMON_PATH/$CONFIG_FILE
+      if [[ "zelnodeprivkey=$zelnodeprivkey" == $(grep -w zelnodeprivkey $FLUX_DAEMON_PATH/$CONFIG_FILE) ]]; then
+        echo -e "${ARROW} ${CYAN}FluxNode Identity Key replaced successful................[${CHECK_MARK}${CYAN}]${NC}"			
+      fi
 		fi
 	fi
 
 	if [[ "$zelnodeoutpoint" != "" ]]; then
-		if [[ "zelnodeoutpoint=$zelnodeoutpoint" == $(grep -w zelnodeoutpoint ~/$CONFIG_DIR/$CONFIG_FILE) ]]; then
+		if [[ "zelnodeoutpoint=$zelnodeoutpoint" == $(grep -w zelnodeoutpoint $FLUX_DAEMON_PATH/$CONFIG_FILE) ]]; then
 			echo -e "${ARROW} ${CYAN}Replace FluxNode Collateral TX ID outpoint skipped ..................[${CHECK_MARK}${CYAN}]${NC}"
 		else
-			sed -i "s/$(grep -e zelnodeoutpoint ~/$CONFIG_DIR/$CONFIG_FILE)/zelnodeoutpoint=$zelnodeoutpoint/" ~/$CONFIG_DIR/$CONFIG_FILE
-			if [[ "zelnodeoutpoint=$zelnodeoutpoint" == $(grep -w zelnodeoutpoint ~/$CONFIG_DIR/$CONFIG_FILE) ]]; then
+			sed -i "s/$(grep -e zelnodeoutpoint $FLUX_DAEMON_PATH/$CONFIG_FILE)/zelnodeoutpoint=$zelnodeoutpoint/" $FLUX_DAEMON_PATH/$CONFIG_FILE
+			if [[ "zelnodeoutpoint=$zelnodeoutpoint" == $(grep -w zelnodeoutpoint $FLUX_DAEMON_PATH/$CONFIG_FILE) ]]; then
 				echo -e "${ARROW} ${CYAN}FluxNode Collateral TX ID replaced successful...............[${CHECK_MARK}${CYAN}]${NC}"
 			fi
 	 fi
 	fi
 
 	if [[ "$zelnodeindex" != "" ]]; then
-		if [[ "zelnodeindex=$zelnodeindex" == $(grep -w zelnodeindex ~/$CONFIG_DIR/$CONFIG_FILE) ]]; then
+		if [[ "zelnodeindex=$zelnodeindex" == $(grep -w zelnodeindex $FLUX_DAEMON_PATH/$CONFIG_FILE) ]]; then
 			echo -e "${ARROW} ${CYAN}Replace FluxNode Output Index skipped......................[${CHECK_MARK}${CYAN}]${NC}"
 		else
-			sed -i "s/$(grep -w zelnodeindex ~/$CONFIG_DIR/$CONFIG_FILE)/zelnodeindex=$zelnodeindex/" ~/$CONFIG_DIR/$CONFIG_FILE
-			if [[ "zelnodeindex=$zelnodeindex" == $(grep -w zelnodeindex ~/$CONFIG_DIR/$CONFIG_FILE) ]]; then
+			sed -i "s/$(grep -w zelnodeindex $FLUX_DAEMON_PATH/$CONFIG_FILE)/zelnodeindex=$zelnodeindex/" $FLUX_DAEMON_PATH/$CONFIG_FILE
+			if [[ "zelnodeindex=$zelnodeindex" == $(grep -w zelnodeindex $FLUX_DAEMON_PATH/$CONFIG_FILE) ]]; then
 				echo -e "${ARROW} ${CYAN}FluxNode Output Index replaced successful..................[${CHECK_MARK}${CYAN}]${NC}"
 			fi
 		fi
 	fi
-	pm2 restart flux > /dev/null 2>&1
-	sudo systemctl start $COIN_NAME  > /dev/null 2>&1 && sleep 2
+  if [[ -z $FLUXOS_VERSION]]; then
+    pm2 restart flux > /dev/null 2>&1
+    sudo systemctl start $COIN_NAME  > /dev/null 2>&1 && sleep 2
+  else
+    sudo systemctl start fluxos > /dev/null 2>&1 && sleep 2
+    sudo systemctl start fluxd  > /dev/null 2>&1 && sleep 2
+  fi
 	NUM='35'
 	MSG1='Restarting daemon service...'
 	MSG2="${CYAN}........................[${CHECK_MARK}${CYAN}]${NC}"
@@ -1593,7 +1609,7 @@ function replace_kadena {
 		done
 	fi	
 	kda_address="kadena:$KDA_A?chainid=0"
-	if [[ $(cat /home/$USER/zelflux/config/userconfig.js | grep "kadena") != "" ]]; then
+	if [[ $(cat $FLUXOS_PATH/config/userconfig.js | grep "kadena") != "" ]]; then
     config_builder "kadena" "$kda_address" "Kadena address" "fluxos"
 		##insertAfter "/home/$USER/zelflux/config/userconfig.js" "zelid" "    kadena: '$kda_address',"
 		##echo -e "${ARROW} ${CYAN}Kadena address set successfully........................[${CHECK_MARK}${CYAN}]${NC}"
@@ -1613,7 +1629,7 @@ function replace_zelid() {
 	done
 
  
-	if [[ $(grep -w $new_zelid /home/$USER/zelflux/config/userconfig.js) != "" ]]; then
+	if [[ $(grep -w $new_zelid $FLUXOS_PATH/config/userconfig.js) != "" ]]; then
 		echo -e "${ARROW} ${CYAN}Replace ZEL ID skipped............................[${CHECK_MARK}${CYAN}]${NC}"
 	else
 		config_builder "zelid" "$new_zelid" "ZEL ID" "fluxos"
@@ -1625,42 +1641,54 @@ function replace_zelid() {
 
 function thunder_mode(){
 
- if [[ -d $HOME/.fluxbenchmark ]]; then
-   sudo chown -R $USER:$USER $HOME/.fluxbenchmark > /dev/null 2>&1
+ if [[ -d $FLUX_BENCH_PATH ]]; then
+   sudo chown -R $USER:$USER $FLUX_BENCH_PATH > /dev/null 2>&1
  else
-   mkdir -p $HOME/.fluxbenchmark > /dev/null 2>&1
+   mkdir -p  $FLUX_BENCH_PATH > /dev/null 2>&1
  fi
  
- if [[ -f /home/$USER/.fluxbenchmark/fluxbench.conf ]]; then
-   if [[ $(grep -e "thunder" /home/$USER/.fluxbenchmark/fluxbench.conf) == "" ]]; then
+ if [[ -f $FLUX_BENCH_PATH/fluxbench.conf ]]; then
+   if [[ $(grep -e "thunder"  $FLUX_BENCH_PATH/fluxbench.conf) == "" ]]; then
      config_builder "thunder" "1" "Thunder Mode" "benchmark"
    else
-     sed -i "/$(grep -e "thunder" /home/$USER/.fluxbenchmark/fluxbench.conf)/d" /home/$USER/.fluxbenchmark/fluxbench.conf > /dev/null 2>&1
+     sed -i "/$(grep -e "thunder"  $FLUX_BENCH_PATH/fluxbench.conf)/d"  $FLUX_BENCH_PATH/fluxbench.conf > /dev/null 2>&1
      echo -e "${ARROW}${GREEN} [BenchD] ${CYAN}Thunder Mode disabled successful${NC}" "${CHECK_MARK}"
    fi
  else
    config_builder "thunder" "1" "Thunder Mode" "benchmark"
  fi
  if [[ "$1" == "" ]]; then
-   echo -e "${ARROW}${GREEN} [BenchD] ${CYAN}Restarting service... ${NC}"
-   sudo systemctl restart zelcash > /dev/null 2>&1
+    echo -e "${ARROW}${GREEN} [BenchD] ${CYAN}Restarting service... ${NC}"
+    if [[ -z $FLUXOS_VERSION]]; then
+      sudo systemctl restart zelcash > /dev/null 2>&1
+    else
+      sudo systemctl restart fluxd > /dev/null 2>&1
+    fi
  fi
  
 }
 
 function development_mode(){
-  if [[ $(cat /home/$USER/$FLUX_DIR/config/userconfig.js | grep "development: 'false'") != "" ]] || [[ $(cat /home/$USER/$FLUX_DIR/config/userconfig.js | grep "development: false") ]]; then
+  if [[ $(cat $FLUXOS_PATH/config/userconfig.js | grep "development: 'false'") != "" ]] || [[ $(cat $FLUXOS_PATH/config/userconfig.js | grep "development: false") ]]; then
     echo -e "${ARROW}${GREEN} [FluxOS] ${CYAN}Enabling development mode... ${NC}"
     config_builder "development" "true" "Development Mode" "fluxos"
-    cd $HOME/$FLUX_DIR
+    cd $FLUXOS_PATH
     git checkout development && git pull > /dev/null 2>&1
-    pm2 restart flux > /dev/null 2>&1
+    if [[ -z $FLUXOS_VERSION]]; then
+      pm2 restart flux > /dev/null 2>&1
+    else
+      sudo systemctl restart fluxos > /dev/null 2>&1
+    fi
   else
     echo -e "${ARROW}${GREEN} [FluxOS] ${CYAN}Disabling development mode... ${NC}"
     config_builder "development" "false" "Development Mode" "fluxos"
-    cd $HOME/$FLUX_DIR
+    cd $FLUXOS_PATH
     git checkout master && git pull > /dev/null 2>&1
-    pm2 restart flux > /dev/null 2>&1
+    if [[ -z $FLUXOS_VERSION]]; then
+      pm2 restart flux > /dev/null 2>&1
+    else
+      sudo systemctl restart fluxos > /dev/null 2>&1
+    fi
   fi
 }
 
@@ -1674,7 +1702,7 @@ function fluxos_reconfiguration {
 		echo -e "${NC}"
 		exit
  fi
- if ! [[ -f /home/$USER/zelflux/config/userconfig.js ]]; then
+ if ! [[ -f $FLUXOS_PATH/config/userconfig.js ]]; then
 	 echo -e "${WORNING} ${CYAN}FluxOS userconfig.js not exist, operation aborted${NC}"
 	 echo -e ""
 	 exit
@@ -1837,12 +1865,12 @@ function bootstrap_new() {
 		fi
 		return
 	else
-		if [[ ! -f /home/$USER/install_conf.json ]]; then
+		if [[ ! -f $DATA_PATH/install_conf.json ]]; then
 			bootstrap_manual
 			if [[ "$Mode" != "install" && "$server_offline" == "0" ]]; then
 				start_service
 				if whiptail --yesno "Would you like remove bootstrap archive file?" 8 60; then
-				  sudo rm -rf /home/$USER/$BOOTSTRAP_FILE > /dev/null 2>&1 && sleep 2
+				  sudo rm -rf $DATA_PATH/$BOOTSTRAP_FILE > /dev/null 2>&1 && sleep 2
 				fi
 			fi
 			return
@@ -1860,16 +1888,16 @@ function bootstrap_new() {
 			stop_service
 		fi
 		echo -e "${ARROW} ${CAYN}Downloading File: ${GREEN}$DOWNLOAD_URL ${NC}"
-		wget --tries 5 -O $BOOTSTRAP_FILE $DOWNLOAD_URL -q --show-progress
-		tar_file_unpack "/home/$USER/$BOOTSTRAP_FILE" "/home/$USER/$CONFIG_DIR"
+		wget --tries 5 -O $DATA_PATH/$BOOTSTRAP_FILE $DOWNLOAD_URL -q --show-progress
+		tar_file_unpack "$DATA_PATH/$BOOTSTRAP_FILE" "$FLUX_DAEMON_PATH"
 	else
 	  if [[ "$Mode" != "install" ]]; then
 			stop_service
 		fi
 		DOWNLOAD_URL="$bootstrap_url"
 		echo -e "${ARROW} ${CAYN}Downloading File: ${GREEN}$DOWNLOAD_URL ${NC}"
-		wget --tries 5 -O $BOOTSTRAP_FILE $DOWNLOAD_URL -q --show-progress
-		tar_file_unpack "/home/$USER/$BOOTSTRAP_FILE" "/home/$USER/$CONFIG_DIR"
+		wget --tries 5 -O $DATA_PATH/$BOOTSTRAP_FILE $DOWNLOAD_URL -q --show-progress
+		tar_file_unpack "$DATA_PATH/$BOOTSTRAP_FILE" "$FLUX_DAEMON_PATH"
 	fi
 
 	if [[ "$Mode" != "install" ]]; then
@@ -1877,10 +1905,10 @@ function bootstrap_new() {
 	fi
 
 	if [[ -z "$bootstrap_zip_del" ]]; then
-		rm -rf /home/$USER/$BOOTSTRAP_FILE > /dev/null 2>&1
+		rm -rf $DATA_PATH/$BOOTSTRAP_FILE > /dev/null 2>&1
 	else
 		if [[ "$bootstrap_zip_del" == "1" ]]; then
-			rm -rf /home/$USER/$BOOTSTRAP_FILE > /dev/null 2>&1
+			rm -rf $DATA_PATH/$BOOTSTRAP_FILE > /dev/null 2>&1
 		fi
 	fi
 }
@@ -1908,26 +1936,26 @@ function bootstrap_manual() {
 			echo -e "${ARROW} ${CYAN}Flux daemon bootstrap height: ${GREEN}$DB_HIGHT${NC}"
 		fi
 		echo -e "${ARROW} ${CYAN}Downloading File: ${GREEN}$DOWNLOAD_URL ${NC}"
-		wget --tries 5 -O $BOOTSTRAP_FILE $DOWNLOAD_URL -q --show-progress
+		wget --tries 5 -O $DATA_PATH/$BOOTSTRAP_FILE $DOWNLOAD_URL -q --show-progress
 		if [[ "$Mode" != "install" ]]; then
 			stop_service
 		fi
-		tar_file_unpack "/home/$USER/$BOOTSTRAP_FILE" "/home/$USER/$CONFIG_DIR"
+		tar_file_unpack "$DATA_PATH/$BOOTSTRAP_FILE" "$FLUX_DAEMON_PATH"
 		sleep 1
 	;;
 	"2)")
 		DOWNLOAD_URL="$(whiptail --title "Flux daemon bootstrap setup" --inputbox "Enter your URL (zip, tar.gz)" 8 72 3>&1 1>&2 2>&3)"
 		echo -e "${ARROW} ${CYAN}Downloading File: ${GREEN}$DOWNLOAD_URL ${NC}"
 		BOOTSTRAP_FILE="${DOWNLOAD_URL##*/}"
-		wget --tries 5 -O $BOOTSTRAP_FILE $DOWNLOAD_URL -q --show-progress
+		wget --tries 5 -O $DATA_PATH/$BOOTSTRAP_FILE $DOWNLOAD_URL -q --show-progress
 		if [[ "$Mode" != "install" ]]; then
 			stop_service
 		fi
 		if [[ "$BOOTSTRAP_FILE" == *".zip"* ]]; then
 			echo -e "${ARROW} ${CYAN}Unpacking wallet bootstrap please be patient...${NC}"
-			unzip -o $BOOTSTRAP_FILE -d /home/$USER/$CONFIG_DIR > /dev/null 2>&1
+			unzip -o $DATA_PATH/$BOOTSTRAP_FILE -d $FLUX_DAEMON_PATH > /dev/null 2>&1
 		else
-			tar_file_unpack "/home/$USER/$BOOTSTRAP_FILE" "/home/$USER/$CONFIG_DIR"
+			tar_file_unpack "$DATA_PATH/$BOOTSTRAP_FILE" "$FLUX_DAEMON_PATH"
 			sleep 1
 		fi
 	;;
@@ -1935,7 +1963,7 @@ function bootstrap_manual() {
 }
 function bootstrap_local() {
 	local BOOTSTRAP_STEM="flux_explorer_bootstrap"
-	local BOOTSTRAP_FILES=($(ls /home/$USER/$BOOTSTRAP_STEM.{tar,tar.gz} 2>/dev/null))
+	local BOOTSTRAP_FILES=($(ls $DATA_PATH/$BOOTSTRAP_STEM.{tar,tar.gz} 2>/dev/null))
 
 	if [ "$BOOTSTRAP_FILES" -a ${#BOOTSTRAP_FILES[@]} ]; then
 		# we take the first bootstrap file
@@ -1946,32 +1974,47 @@ function bootstrap_local() {
 			if [[ "$Mode" != "install" ]]; then
 				stop_service
 			fi
-			tar_file_unpack "$FILE_PATH" "/home/$USER/$CONFIG_DIR"
+			tar_file_unpack "$FILE_PATH" "$FLUX_DAEMON_PATH"
 		fi
 	fi
 }
 function flux_chain_date_wipe() {
-	if [[ -e ~/$CONFIG_DIR/blocks ]] && [[ -e ~/$CONFIG_DIR/chainstate ]]; then
+	if [[ -e $FLUX_DAEMON_PATH/blocks ]] && [[ -e $FLUX_DAEMON_PATH/chainstate ]]; then
 		echo -e "${ARROW} ${CYAN}Removing blocks, chainstate, determ_zelnodes directories...${NC}"
-		rm -rf ~/$CONFIG_DIR/blocks ~/$CONFIG_DIR/chainstate ~/$CONFIG_DIR/determ_zelnodes > /dev/null 2>&1
+		rm -rf $FLUX_DAEMON_PATH/blocks $FLUX_DAEMON_PATH/chainstate $FLUX_DAEMON_PATH/determ_zelnodes > /dev/null 2>&1
 	fi
 }
 function stop_service() {
-	pm2 stop watchdog > /dev/null 2>&1 && sleep 2
-	echo -e "${ARROW} ${CYAN}Stopping Flux daemon service${NC}"
-	sudo systemctl stop zelcash > /dev/null 2>&1 && sleep 2
-	sudo fuser -k 16125/tcp > /dev/null 2>&1 && sleep 1
+  echo -e "${ARROW} ${CYAN}Stopping Flux daemon service${NC}"
+	if [[ -z $FLUXOS_VERSION ]]; then
+	  pm2 stop watchdog > /dev/null 2>&1 && sleep 2
+	  sudo systemctl stop zelcash > /dev/null 2>&1 && sleep 2
+	  sudo fuser -k 16125/tcp > /dev/null 2>&1 && sleep 1
+	else
+	  sudo systemctl stop flux-watchdog > /dev/null 2>&1 && sleep 2
+	  sudo systemctl stop fluxd > /dev/null 2>&1 && sleep 2
+	  sudo fuser -k 16125/tcp > /dev/null 2>&1 && sleep 1
+	fi
 	flux_chain_date_wipe
 }
 function start_service() {
-	sudo systemctl start zelcash  > /dev/null 2>&1 && sleep 2
+	if [[ -z $FLUXOS_VERSION ]]; then
+	 sudo systemctl start zelcash  > /dev/null 2>&1 && sleep 2
+  else
+	 sudo systemctl start fluxd  > /dev/null 2>&1 && sleep 2
+	fi
 	NUM='35'
 	MSG1='Starting Flux daemon service...'
 	MSG2="${CYAN}........................[${CHECK_MARK}${CYAN}]${NC}"
 	spinning_timer
 	echo -e "" && echo -e ""
-	pm2 restart flux > /dev/null 2>&1 && sleep 2
-	pm2 start watchdog --watch > /dev/null 2>&1 && sleep 2
+	if [[ -z $FLUXOS_VERSION ]]; then
+	  pm2 restart flux > /dev/null 2>&1 && sleep 2
+	  pm2 start watchdog --watch > /dev/null 2>&1 && sleep 2
+	else
+	 sudo systemctl restart fluxos > /dev/null 2>&1 && sleep 2
+	 sudo systemctl start flux-watchdog > /dev/null 2>&1 && sleep 2
+	fi
 }
 ######### INSTALLATION SECTION ############################
 function install_mongod() {
@@ -2491,13 +2534,13 @@ function log_rotate() {
 }
 #### UPnP
 function upnp_enable() {
-  if [[ -d $HOME/.fluxbenchmark ]]; then
-    sudo chown -R $USER:$USER $HOME/.fluxbenchmark > /dev/null 2>&1
+  if [[ -d $FLUX_BENCH_PATH ]]; then
+    sudo chown -R $USER:$USER $FLUX_BENCH_PATH > /dev/null 2>&1
   fi
 	try="0"
 	echo -e ""
 	echo -e "${ARROW}${YELLOW} Creating UPnP configuration...${NC}"
-	if [[ ! -f /home/$USER/zelflux/config/userconfig.js ]]; then
+	if [[ ! -f $FLUXOS_PATH/config/userconfig.js ]]; then
 		echo -e "${WORNING} ${CYAN}Missing FluxOS configuration file - install/re-install Flux Node...${NC}" 
 		echo -e ""
 		return
@@ -2525,23 +2568,14 @@ function upnp_enable() {
 			fi
 		fi
 	done
-	#if [[ $(cat /home/$USER/zelflux/config/userconfig.js | grep "apiport") != "" ]]; then
-		#sed -i "s/$(grep -e apiport /home/$USER/zelflux/config/userconfig.js)/apiport: '$FLUX_PORT',/" /home/$USER/zelflux/config/userconfig.js
-		#if [[ $(grep -w $FLUX_PORT /home/$USER/zelflux/config/userconfig.js) != "" ]]; then
-			#echo -e "${ARROW} ${CYAN}FluxOS port replaced successfully...................[${CHECK_MARK}${CYAN}]${NC}"
-		#fi
-	#else
-		#insertAfter "/home/$USER/zelflux/config/userconfig.js" "zelid" "apiport: '$FLUX_PORT',"
-		#echo -e "${ARROW} ${CYAN}FluxOS port set successfully........................[${CHECK_MARK}${CYAN}]${NC}"
-	#fi
 	config_builder "apiport" "$FLUX_PORT" "MultiPort Mode" "fluxos"
-	if [[ ! -d /home/$USER/.fluxbenchmark ]]; then
-		sudo mkdir -p /home/$USER/.fluxbenchmark 2>/dev/null
+	if [[ ! -d $FLUX_BENCH_PATH ]]; then
+		sudo mkdir -p $FLUX_BENCH_PATH 2>/dev/null
 		config_builder "fluxport" "$FLUX_PORT" "MultiPort Mode" "benchmark"
 	else
 		config_builder "fluxport" "$FLUX_PORT" "MultiPort Mode" "benchmark"
 	fi
-	if [[ -f /home/$USER/.fluxbenchmark/fluxbench.conf ]]; then
+	if [[ -f $FLUX_BENCH_PATH/fluxbench.conf ]]; then
 		#API PORT
 		sudo ufw allow $FLUX_PORT > /dev/null 2>&1
 		#HOME UI PORT
@@ -2611,8 +2645,13 @@ function upnp_enable() {
 	fi
 	if [[ "$1" != "install" ]]; then
 		echo -e "${ARROW} ${CYAN}Restarting FluxOS and Benchmark.....${NC}"
-		sudo systemctl restart zelcash  > /dev/null 2>&1
-		pm2 restart flux  > /dev/null 2>&1
+    if [[ -z $FLUXOS_VERSION ]]; then
+		  sudo systemctl restart zelcash  > /dev/null 2>&1
+		  pm2 restart flux  > /dev/null 2>&1
+    else
+      sudo systemctl restart fluxd  > /dev/null 2>&1
+      sudo systemctl restart fluxos  > /dev/null 2>&1
+    fi
 		sleep 150
 		echo -e "${ARROW}${CYAN} Checking FluxOS logs... ${NC}"
 		error_check=$(tail -n10 /home/$USER/.pm2/logs/flux-out.log | grep "UPnP failed")
@@ -2682,9 +2721,9 @@ function selfhosting_creator(){
 			case $CHOICE in
 			"1)")
 			  echo -e "${ARROW} ${YELLOW}Creating cron service for ip rotate...${NC}"
-			  if [[ -f /home/$USER/device_conf.json ]]; then
-				  sudo rm -rf /home/$USER/device_conf.json
-					echo -e "${ARROW} ${CYAN}Removing config file, path: ${GREEN}/home/$USER/device_conf.json${NC}"	
+			  if [[ -f $DATA_PATH/device_conf.json ]]; then
+				  sudo rm -rf $DATA_PATH/device_conf.json
+					echo -e "${ARROW} ${CYAN}Removing config file, path: ${GREEN}$DATA_PATH/device_conf.json${NC}"	
 				fi
 				selfhosting
 			;;
@@ -2702,13 +2741,13 @@ function selfhosting_creator(){
 					fi
 				done;
 				device_setup=$(
-						whiptail --title " SELECT YOUR DEVICE INTERFACE "         \
-										--radiolist " \n Use the UP/DOWN arrows to highlight the device name you want. Press Spacebar on the device name you want to select, THEN press ENTER." 25 55 10 \
-										"${choices[@]}" \
-										3>&2 2>&1 1>&3
+          whiptail --title " SELECT YOUR DEVICE INTERFACE "         \
+          --radiolist " \n Use the UP/DOWN arrows to highlight the device name you want. Press Spacebar on the device name you want to select, THEN press ENTER." 25 55 10 \
+          "${choices[@]}" \
+          3>&2 2>&1 1>&3
 				);
 				if [[ "$device_setup" != "" ]]; then
-					if [[ ! -f /home/$USER/device_conf.json ]]; then 
+					if [[ ! -f $DATA_PATH/device_conf.json ]]; then 
 						echo "{}" > device_conf.json 
 					fi 
 					echo "$(jq -r --arg value "$device_setup" '.device_name=$value' device_conf.json)" > device_conf.json
@@ -2725,8 +2764,8 @@ function selfhosting_creator(){
 			echo -e "${ARROW} ${CYAN}Removing cron jobs...${NC}"
 			crontab -u $USER -l | grep -v 'ip_check'  | crontab -u $USER -
 			echo -e "${ARROW} ${CYAN}Removing of files related to IP rotation...${NC}"
-			rm -rf /home/$USER/device_conf.json > /dev/null 2>&1
-			rm -rf /home/$USER/ip_check.sh > /dev/null 2>&1
+			rm -rf $DATA_PATH/device_conf.json > /dev/null 2>&1
+			rm -rf $DATA_PATH/ip_check.sh > /dev/null 2>&1
 			echo -e ""
 		esac
 }
@@ -2747,7 +2786,7 @@ function selfhosting() {
 			echo -e "${ARROW} ${CYAN}Device auto detection, name: ${GREEN}$device_name ${NC}"
 		fi
 	else
-   		 device_name="$device_setup"
+    device_name="$device_setup"
 	fi
 
 	if [[ "$device_name" != "" && "$WANIP" != "" ]]; then
@@ -2759,11 +2798,18 @@ function selfhosting() {
 		return 1
 	fi
 	echo -e "${ARROW} ${CYAN}Creating IP check script...${NC}" && sleep 1
-	sudo rm /home/$USER/ip_check.sh > /dev/null 2>&1
-	sudo touch /home/$USER/ip_check.sh
-	sudo chown $USER:$USER /home/$USER/ip_check.sh
-	cat <<-'EOF' > /home/$USER/ip_check.sh
+	sudo rm $DATA_PATH/ip_check.sh > /dev/null 2>&1
+	sudo touch $DATA_PATH/ip_check.sh
+	sudo chown $USER:$USER $DATA_PATH/ip_check.sh
+	cat <<-'EOF' > $DATA_PATH/ip_check.sh
 	#!/bin/bash
+  if [[ "$FLUXOS_VERSION" == "" ]]; then
+    DATA_PATH="/home/$USER"
+		FLUXOS_PATH="/home/$USER/zelflux"
+  else
+    DATA_PATH="/dat"
+		FLUXOS_PATH="/dat/usr/lib/fluxos"
+  fi
 
 	function get_ip(){
 	WANIP=$(curl --silent -m 10 https://api4.my-ip.io/ip | tr -dc '[:alnum:].')
@@ -2776,8 +2822,8 @@ function selfhosting() {
 	}
 
 	function get_device_name(){
-		if [[ -f /home/$USER/device_conf.json ]]; then
-			device_name=$(jq -r .device_name /home/$USER/device_conf.json)
+		if [[ -f $DATA_PATH/device_conf.json ]]; then
+			device_name=$(jq -r .device_name $DATA_PATH/device_conf.json)
 		else
 			device_name=$(ip addr | grep 'BROADCAST,MULTICAST,UP,LOWER_UP' | head -n1 | awk '{print $2}' | sed 's/://' | sed 's/@/ /' | awk '{print $1}')
 		fi
@@ -2790,14 +2836,14 @@ function selfhosting() {
 		get_device_name
 	  if [[ "$device_name" != "" && "$WANIP" != "" ]]; then
 		date_timestamp=$(date '+%Y-%m-%d %H:%M:%S')
-		echo -e "New IP detected during $1, IP: $WANIP was added to $device_name at $date_timestamp" >> /home/$USER/ip_history.log
+		echo -e "New IP detected during $1, IP: $WANIP was added to $device_name at $date_timestamp" >> $DATA_PATH/ip_history.log
 		sudo ip addr add $WANIP dev $device_name && sleep 2
 	  fi
 	fi
 	if [[ $1 == "ip_check" ]]; then
 	  get_ip
 	  get_device_name
-	  api_port=$(grep -w apiport /home/$USER/zelflux/config/userconfig.js | grep -o '[[:digit:]]*')
+	  api_port=$(grep -w apiport $FLUXOS_PATH/config/userconfig.js | grep -o '[[:digit:]]*')
 	  if [[ "$api_port" == "" ]]; then
 		api_port="16127"
 	  fi
@@ -2805,23 +2851,26 @@ function selfhosting() {
 	  if [[ "$WANIP" != "" && "$confirmed_ip" != "" && "$confirmed_ip" != "null" ]]; then
 		 if [[ "$WANIP" != "$confirmed_ip" ]]; then
 			date_timestamp=$(date '+%Y-%m-%d %H:%M:%S')
-			echo -e "New IP detected during $1, IP: $WANIP was added to $device_name at $date_timestamp" >> /home/$USER/ip_history.log
+			echo -e "New IP detected during $1, IP: $WANIP was added to $device_name at $date_timestamp" >> $DATA_PATH/ip_history.log
 			sudo ip addr add $WANIP dev $device_name && sleep 2
 		 fi
 	  fi
 	fi
 	EOF
-	sudo chmod +x /home/$USER/ip_check.sh
+	sudo chmod +x $DATA_PATH/ip_check.sh
 	sudo [ -f /var/spool/cron/crontabs/$USER ] && crontab_check=$(sudo cat /var/spool/cron/crontabs/$USER | grep -o ip_check | wc -l) || crontab_check=0
-	
 	if [[ "$crontab_check" != "0" ]]; then
 	  echo -e "${ARROW} ${CYAN}Removing old cron jobs...${NC}"
 	  crontab -u $USER -l | grep -v 'ip_check'  | crontab -u $USER -
 	fi
-	
 	echo -e "${ARROW} ${CYAN}Adding cron jobs...${NC}" && sleep 1
-	(crontab -l -u "$USER" 2>/dev/null; echo "@reboot env USER=\$LOGNAME \$HOME/ip_check.sh restart") | crontab -
-	(crontab -l -u "$USER" 2>/dev/null; echo "*/15 * * * * env USER=\$LOGNAME \$HOME/ip_check.sh ip_check") | crontab -
+	if [[ "$FLUXOS_VERSION" == "" ]]; then
+    (crontab -l -u "$USER" 2>/dev/null; echo "@reboot env USER=\$LOGNAME \$HOME/ip_check.sh restart") | crontab -
+    (crontab -l -u "$USER" 2>/dev/null; echo "*/15 * * * * env USER=\$LOGNAME \$HOME/ip_check.sh ip_check") | crontab -
+	else
+    (crontab -l -u "$USER" 2>/dev/null; echo "@reboot env USER=\$LOGNAME /dat/ip_check.sh restart") | crontab -
+    (crontab -l -u "$USER" 2>/dev/null; echo "*/15 * * * * env USER=\$LOGNAME /dat/ip_check.sh ip_check") | crontab -
+	fi
 	echo -e "${ARROW} ${CYAN}Script installed! ${NC}" 
 	echo -e "" 
 }
@@ -2845,7 +2894,7 @@ function multinode(){
 	echo -e "${BOOK} ${RED}If FluxOs fails to communicate with router or upnp fails it will shutdown FluxOS... ${NC}"
 	echo -e ""
 	echo -e "${YELLOW}================================================================${NC}"
-	if [[ ! -f /home/$USER/zelflux/config/userconfig.js ]]; then
+	if [[ ! -f $FLUXOS_PATH/config/userconfig.js ]]; then
 	  echo -e ""
 		echo -e "${WORNING} ${CYAN}First install FluxNode...${NC}"
 		echo -e "${WORNING} ${CYAN}Operation stopped...${NC}"
@@ -2855,43 +2904,7 @@ function multinode(){
 	sleep 8
 	bash -i <(curl -s https://raw.githubusercontent.com/RunOnFlux/fluxnode-multitool/${ROOT_BRANCH}/multinode.sh)
 }
-function install_watchtower(){
-	echo -e "${GREEN}Module: Install flux_watchtower for docker images autoupdate${NC}"
-	echo -e "${YELLOW}================================================================${NC}"
-	if [[ "$USER" == "root" || "$USER" == "ubuntu" || "$USER" == "admin" ]]; then
-		echo -e "${CYAN}You are currently logged in as ${GREEN}$USER${NC}"
-		echo -e "${CYAN}Please switch to the user account.${NC}"
-		echo -e "${YELLOW}================================================================${NC}"
-		echo -e "${NC}"
-		exit
-	fi 
-	echo -e ""
-	echo -e "${ARROW} ${CYAN}Checking if flux_watchtower is installed....${NC}"
-	apps_check=$(docker ps | grep "flux_watchtower")
-	if [[ "$apps_check" != "" ]]; then
-		echo -e "${ARROW} ${CYAN}Stopping flux_watchtower...${NC}"
-		docker stop flux_watchtower > /dev/null 2>&1
-		sleep 2
-		echo -e "${ARROW} ${CYAN}Removing flux_watchtower...${NC}"
-		docker rm flux_watchtower > /dev/null 2>&1
-	fi
-	echo -e "${ARROW} ${CYAN}Downloading containrrr/watchtower image...${NC}"
-	docker pull containrrr/watchtower:latest > /dev/null 2>&1
-	echo -e "${ARROW} ${CYAN}Starting containrrr/watchtower...${NC}"
-	random=$(shuf -i 7500-35000 -n 1)
-	echo -e "${ARROW} ${CYAN}Interval: ${GREEN} $random sec.${NC}"
-	apps_id=$(docker run -d \
-	--restart unless-stopped \
-	--name flux_watchtower \
-	-v /var/run/docker.sock:/var/run/docker.sock \
-	containrrr/watchtower \
-	--cleanup --interval $random 2> /dev/null) 
-	if [[ $apps_id =~ ^[[:alnum:]]+$ ]]; then
-		echo -e "${ARROW} ${CYAN}flux_watchtower installed successful, id: ${GREEN}$apps_id${NC}"
-	else
-		echo -e "${ARROW} ${CYAN}flux_watchtower installion failed...${NC}"
-	fi
-}
+
 function analyzer_and_fixer(){
 	echo -e "${GREEN}Module: FluxNode analyzer and fixer${NC}"
 	echo -e "${YELLOW}================================================================${NC}"
