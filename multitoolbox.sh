@@ -705,20 +705,26 @@ function install_watchtower(){
 function mongod_db_fix() {
 	echo -e "${GREEN}Module: MongoDB FiX action${NC}"
 	echo -e "${YELLOW}================================================================${NC}"
- if [[ "$USER" == "root" || "$USER" == "ubuntu" || "$USER" == "admin" ]]; then
+  if [[ "$USER" == "root" || "$USER" == "ubuntu" || "$USER" == "admin" ]]; then
 		echo -e "${CYAN}You are currently logged in as ${GREEN}$USER${NC}"
 		echo -e "${CYAN}Please switch to the user account.${NC}"
 		echo -e "${YELLOW}================================================================${NC}"
 		echo -e "${NC}"
 		exit
 	fi 
-
-
-	 CHOICE=$(
- whiptail --title "MongoDB FiX action" --menu "Make your choice" 15 65 8 \
- "1)" "Soft repair - MongoDB database repair"   \
- "2)" "Hard repair - MongoDB re-install"  3>&2 2>&1 1>&3
-	)
+	if [[ -z $FLUXOS_VERSION ]]; then
+    CHOICE=$(
+      whiptail --title "MongoDB FiX action" --menu "Make your choice" 15 65 8 \
+      "1)" "Soft repair - MongoDB database repair"   \
+      "2)" "Hard repair - MongoDB re-install"  3>&2 2>&1 1>&3
+    )
+	else
+    CHOICE=$(
+      whiptail --title "MongoDB FiX action" --menu "Make your choice" 15 65 8 \
+      "1)" "Soft repair - MongoDB database repair"   \
+      "2)" "Hard repair - MongoDB wipe"  3>&2 2>&1 1>&3
+    )
+	fi
 		case $CHOICE in
 		"1)")
 			echo -e ""  
@@ -726,9 +732,11 @@ function mongod_db_fix() {
 			echo -e "${ARROW} ${CYAN}Stopping mongod service ${NC}" 
 			sudo systemctl stop mongod
 			echo -e "${ARROW} ${CYAN}Fix for corrupted DB ${NC}"
-			sudo -u mongodb mongod --dbpath /var/lib/mongodb --repair > /dev/null 2>&1
+			sudo rm $MONGODB_DATA_PATH/journal/* > /dev/null 2>&1
+			sudo rm $MONGODB_DATA_PATH/mongod.lock > /dev/null 2>&1
+			sudo -u mongodb mongod --dbpath $MONGODB_DATA_PATH --repair > /dev/null 2>&1
 			echo -e "${ARROW} ${CYAN}Fix for bad privilege ${NC}" 
-			sudo chown -R mongodb:mongodb /var/lib/mongodb > /dev/null 2>&1
+			sudo chown -R mongodb:mongodb $MONGODB_DATA_PATH > /dev/null 2>&1
 			sudo chown mongodb:mongodb /tmp/mongodb-27017.sock > /dev/null 2>&1
 			echo -e "${ARROW} ${CYAN}Starting mongod service ${NC}" 
 			sudo systemctl start mongod
@@ -737,8 +745,14 @@ function mongod_db_fix() {
 				echo -e "${ARROW} ${CYAN}Service status:${SEA} $(sudo systemctl status mongod | grep -w 'Active' | sed -e 's/^[ \t]*//')${NC}" 
 			fi
       echo -e "${ARROW} ${CYAN}Restarting FluxOS and Benchmark...${NC}"
-			sudo systemctl restart zelcash > /dev/null 2>&1
-			pm2 restart flux > /dev/null 2>&1
+			if [[ -z $FLUXOS_VERSION ]]; then
+				sudo systemctl restart zelcash > /dev/null 2>&1
+				pm2 restart flux > /dev/null 2>&1
+			else
+				sudo systemctl restart fluxd > /dev/null 2>&1
+				sudo systemctl restart fluxbenchd > /dev/null 2>&1
+				sudo systemctl restart fluxos > /dev/null 2>&1
+			fi
 			sleep 5
       echo -e ""
 		;;
@@ -747,73 +761,82 @@ function mongod_db_fix() {
 			echo -e "${ARROW} ${YELLOW}Hard repair starting... ${NC}" 
 			echo -e "${ARROW} ${CYAN}Stopping mongod service...${NC}" 
 			sudo systemctl stop mongod 
-			#sudo rm -rf /home/$USER/mongoDB_backup.gz > /dev/null 2>&1
-			#echo -e "${ARROW} ${CYAN}Backuping Database... ${NC}"
-                        #mongodump --archive=/home/$USER/mongoDB_backup.gz > /dev/null 2>&1
-			echo -e "${ARROW} ${CYAN}Removing MongoDB... ${NC}" 
-      sudo apt-get remove -f mongodb-org* -y > /dev/null 2>&1
-			sudo apt-get purge --allow-change-held-packages mongodb-org* -y > /dev/null 2>&1
-      sudo apt autoremove -y > /dev/null 2>&1
-			echo -e "${ARROW} ${CYAN}Removing Database... ${NC}"
-			sudo rm -r /var/log/mongodb > /dev/null 2>&1
-			sudo rm -r /var/lib/mongodb > /dev/null 2>&1
-			echo -e "${ARROW} ${CYAN}Installing MongoDB... ${NC}"
-      avx_check=$(cat /proc/cpuinfo | grep -o avx | head -n1)
-      os_version=$(lsb_release -rs | tr -d '.')
-      architecture=$(dpkg --print-architecture)
-
-      if [[ $(lsb_release -d) = *Debian* ]]; then
-        os_name="Debian"
-      fi  
-      if [[ $(lsb_release -d) = *Ubuntu* ]]; then
-        os_name="Ubuntu"
-      fi
-      #Ubuntu MongoDB 4.4
-      if [[ "$avx_check" == ""  && "$os_name" == "Ubuntu"  && "$architecture" == "amd64" && "$os_version" -le "2010" ]] || [[ "$os_name" == "Ubuntu"  && "$architecture" == "arm64" && "$os_version" -le "2010" ]]; then
-       install_mongod="4.4"
-      fi
-      #Debian MongoDB 4.4
-      if [[ "$avx_check" == ""  && "$os_name" == "Debian"  && "$architecture" == "amd64" && "$os_version" -le "9" ]] || [[ "$os_name" == "Debian"  && "$architecture" == "arm64" && "$os_version" -le "9" ]]; then
+      if [[ -z $FLUXOS_VERSION ]]; then 
+        echo -e "${ARROW} ${CYAN}Removing MongoDB... ${NC}" 
+        sudo apt-get remove -f mongodb-org* -y > /dev/null 2>&1
+        sudo apt-get purge --allow-change-held-packages mongodb-org* -y > /dev/null 2>&1
+        sudo apt autoremove -y > /dev/null 2>&1
+        echo -e "${ARROW} ${CYAN}Removing Database... ${NC}"
+        sudo rm -r /var/log/mongodb > /dev/null 2>&1
+        sudo rm -r /var/lib/mongodb > /dev/null 2>&1
+        echo -e "${ARROW} ${CYAN}Installing MongoDB... ${NC}"
+        avx_check=$(cat /proc/cpuinfo | grep -o avx | head -n1)
+        os_version=$(lsb_release -rs | tr -d '.')
+        architecture=$(dpkg --print-architecture)
+        if [[ $(lsb_release -d) = *Debian* ]]; then
+          os_name="Debian"
+        fi  
+        if [[ $(lsb_release -d) = *Ubuntu* ]]; then
+          os_name="Ubuntu"
+        fi
+        #Ubuntu MongoDB 4.4
+        if [[ "$avx_check" == ""  && "$os_name" == "Ubuntu"  && "$architecture" == "amd64" && "$os_version" -le "2010" ]] || [[ "$os_name" == "Ubuntu"  && "$architecture" == "arm64" && "$os_version" -le "2010" ]]; then
         install_mongod="4.4"
-      fi
-      if [[ "$install_mongod" == "4.4" ]]; then
-        sudo apt update -y > /dev/null 2>&1
-        sudo apt install -y mongodb-org=4.4.18 mongodb-org-server=4.4.18 mongodb-org-shell=4.4.18 mongodb-org-mongos=4.4.18 mongodb-org-tools=4.4.18 > /dev/null 2>&1 && sleep 2
-        echo "mongodb-org hold" | sudo dpkg --set-selections > /dev/null 2>&1 && sleep 2
-        echo "mongodb-org-server hold" | sudo dpkg --set-selections > /dev/null 2>&1 
-        echo "mongodb-org-shell hold" | sudo dpkg --set-selections > /dev/null 2>&1 
-        echo "mongodb-org-mongos hold" | sudo dpkg --set-selections > /dev/null 2>&1 
-        echo "mongodb-org-tools hold" | sudo dpkg --set-selections > /dev/null 2>&1 
+        fi
+        #Debian MongoDB 4.4
+        if [[ "$avx_check" == ""  && "$os_name" == "Debian"  && "$architecture" == "amd64" && "$os_version" -le "9" ]] || [[ "$os_name" == "Debian"  && "$architecture" == "arm64" && "$os_version" -le "9" ]]; then
+          install_mongod="4.4"
+        fi
+        if [[ "$install_mongod" == "4.4" ]]; then
+          sudo apt update -y > /dev/null 2>&1
+          sudo apt install -y mongodb-org=4.4.18 mongodb-org-server=4.4.18 mongodb-org-shell=4.4.18 mongodb-org-mongos=4.4.18 mongodb-org-tools=4.4.18 > /dev/null 2>&1 && sleep 2
+          echo "mongodb-org hold" | sudo dpkg --set-selections > /dev/null 2>&1 && sleep 2
+          echo "mongodb-org-server hold" | sudo dpkg --set-selections > /dev/null 2>&1 
+          echo "mongodb-org-shell hold" | sudo dpkg --set-selections > /dev/null 2>&1 
+          echo "mongodb-org-mongos hold" | sudo dpkg --set-selections > /dev/null 2>&1 
+          echo "mongodb-org-tools hold" | sudo dpkg --set-selections > /dev/null 2>&1 
+        else
+          sudo apt update -y > /dev/null 2>&1
+          DEBIAN_FRONTEND=noninteractive sudo apt-get --yes install mongodb-org > /dev/null 2>&1 
+        fi
+        sudo mkdir -p /var/log/mongodb > /dev/null 2>&1
+        sudo mkdir -p /var/lib/mongodb > /dev/null 2>&1
+        echo -e "${ARROW} ${CYAN}Settings privilege... ${NC}"
+        sudo chown -R mongodb:mongodb /var/log/mongodb > /dev/null 2>&1
+        sudo chown -R mongodb:mongodb /var/lib/mongodb > /dev/null 2>&1
+        sudo chown mongodb:mongodb /tmp/mongodb-27017.sock > /dev/null 2>&1
+        fluxos_clean
+        #echo -e "${ARROW} ${CYAN}Restoring Database... ${NC}"
+        #mongorestore --drop --archive=/home/$USER/mongoDB_backup.gz > /dev/null 2>&1
+        echo -e "${ARROW} ${CYAN}Starting mongod service... ${NC}"
+        sudo systemctl enable mongod
+        sudo systemctl start mongod
+        if mongod --version > /dev/null 2>&1; then
+          string_limit_check_mark "MongoDB $(mongod --version | grep 'db version' | sed 's/db version.//') installed................................." "MongoDB ${GREEN}$(mongod --version | grep 'db version' | sed 's/db version.//')${CYAN} installed................................."
+          echo -e "${ARROW} ${CYAN}Service status:${SEA} $(sudo systemctl status mongod | grep -w 'Active' | sed -e 's/^[ \t]*//')${NC}" 
+        else
+          string_limit_x_mark "MongoDB was not installed................................."
+        fi
+        echo -e "${ARROW} ${CYAN}Restarting FluxOS and Benchmark...${NC}"
+        sudo systemctl restart zelcash > /dev/null 2>&1
+        pm2 restart flux > /dev/null 2>&1
+        sleep 5
+        echo -e ""
       else
-        sudo apt update -y > /dev/null 2>&1
-        DEBIAN_FRONTEND=noninteractive sudo apt-get --yes install mongodb-org > /dev/null 2>&1 
+        sudo systemctl stop flux-watchdog > /dev/null 2>&1
+        sudo systemctl stop fluxd > /dev/null 2>&1
+				sudo systemctl stop fluxbenchd > /dev/null 2>&1
+				sudo systemctl stop fluxos > /dev/null 2>&1
+        sudo rm -rf /var/lib/mongodb/*
+        sudo systemctl start mongod
+        fluxos_clean
+				sudo systemctl start fluxd > /dev/null 2>&1
+				sudo systemctl start fluxbenchd > /dev/null 2>&1
+				sudo systemctl start fluxos > /dev/null 2>&1
+        sudo systemctl start flux-watchdog > /dev/null 2>&1
       fi
-			sudo mkdir -p /var/log/mongodb > /dev/null 2>&1
-			sudo mkdir -p /var/lib/mongodb > /dev/null 2>&1
-			echo -e "${ARROW} ${CYAN}Settings privilege... ${NC}"
-			sudo chown -R mongodb:mongodb /var/log/mongodb > /dev/null 2>&1
-			sudo chown -R mongodb:mongodb /var/lib/mongodb > /dev/null 2>&1
-			sudo chown mongodb:mongodb /tmp/mongodb-27017.sock > /dev/null 2>&1
-			fluxos_clean
-		  #echo -e "${ARROW} ${CYAN}Restoring Database... ${NC}"
-			#mongorestore --drop --archive=/home/$USER/mongoDB_backup.gz > /dev/null 2>&1
-			echo -e "${ARROW} ${CYAN}Starting mongod service... ${NC}"
-      sudo systemctl enable mongod
-			sudo systemctl start mongod
-			if mongod --version > /dev/null 2>&1; then
-				string_limit_check_mark "MongoDB $(mongod --version | grep 'db version' | sed 's/db version.//') installed................................." "MongoDB ${GREEN}$(mongod --version | grep 'db version' | sed 's/db version.//')${CYAN} installed................................."
-				echo -e "${ARROW} ${CYAN}Service status:${SEA} $(sudo systemctl status mongod | grep -w 'Active' | sed -e 's/^[ \t]*//')${NC}" 
-			else
-				string_limit_x_mark "MongoDB was not installed................................."
-			fi
-      echo -e "${ARROW} ${CYAN}Restarting FluxOS and Benchmark...${NC}"
-			sudo systemctl restart zelcash > /dev/null 2>&1
-			pm2 restart flux > /dev/null 2>&1
-			sleep 5
-			echo -e ""
 		;;
 	esac
-
 }
 function node_reconfiguration() {
 	reset=""

@@ -1104,7 +1104,6 @@ function  fluxos_clean(){
      sudo docker rm $line > /dev/null 2>&1 && sleep 2
    done
  fi
-
   echo -e "${ARROW} ${CYAN}Removing syncthing...${NC}"
 	if [[ -z $FLUXOS_VERSION ]]; then
     sudo pkill -9 syncthing > /dev/null 2>&1
