@@ -54,7 +54,7 @@ PORT=16125
 export NEWT_COLORS='
 title=black,
 '
-if [[ "$FLUXOS_VERSION" == "" ]]; then
+if [[ -z $FLUXOS_VERSION ]]; then
   FLUXOS_PATH="/home/$USER/zelflux"
   FLUX_WATCHDOG_PATH="/home/$USER/watchdog"
   FLUX_DAEMON_PATH="/home/$USER/.flux"
@@ -233,18 +233,18 @@ function buildBlockedPortsList() {
   key="$1"
   value="$2"
   if [[ $(cat "$FLUXOS_PATH/config/userconfig.js" | grep "$key") == "" ]]; then
-      insert "$FLUXOS_PATH/config/userconfig.js" "testnet" "  $key: $value,"
-      padding "${ARROW}${GREEN} [FluxOS] ${CYAN}$3${NC}" "${CHECK_MARK}"
-      return
+		insert "$FLUXOS_PATH/config/userconfig.js" "testnet" "  $key: $value,"
+		padding "${ARROW}${GREEN} [FluxOS] ${CYAN}$3${NC}" "${CHECK_MARK}"
+		return
   fi
 }
 
 function CreateBlockedPortsList() {
   ADD=$(whiptail --inputbox "Enter the ports to the blocked list, separated by commas" 8 85 3>&1 1>&2 2>&3)
   if [[ $? == 1 ]]; then
-     padding "${ARROW}${GREEN} [FluxOS] ${CYAN}The operation was canceled${NC}" "${X_MARK}"
-     echo -e ""
-     exit
+    padding "${ARROW}${GREEN} [FluxOS] ${CYAN}The operation was canceled${NC}" "${X_MARK}"
+    echo -e ""
+    exit
   fi
   NumberCheck=$(sed 's/,/1/g' <<< $ADD)
   ADD=$(sed 's/,/ /g' <<< $ADD)
@@ -368,19 +368,19 @@ function AddBlockedRepository() {
 
 function buildBlockedRepositoryList() {
   if [[ ! -f "$FLUXOS_PATH/config/userconfig.js" ]]; then
-   padding "${ARROW}${GREEN} [FluxOS] ${CYAN}Config file does not exist...${NC}" "${X_MARK}"
-   exit
+    padding "${ARROW}${GREEN} [FluxOS] ${CYAN}Config file does not exist...${NC}" "${X_MARK}"
+    exit
   fi
   if [[ "$1" == ""  || "$2" == "" ]]; then
-   padding "${ARROW}${GREEN} [FluxOS] ${CYAN}Empty key/value skipped${NC}" "${X_MARK}"
-   exit
+    padding "${ARROW}${GREEN} [FluxOS] ${CYAN}Empty key/value skipped${NC}" "${X_MARK}"
+    exit
   fi
   key="$1"
   value="$2"
   if [[ $(cat $FLUXOS_PATH/config/userconfig.js | grep "$key") == "" ]]; then
-      insert "$FLUXOS_PATH/config/userconfig.js" "testnet" "  $key: $value,"
-      padding "${ARROW}${GREEN} [FluxOS] ${CYAN}$3${NC}" "${CHECK_MARK}"
-      return
+    insert "$FLUXOS_PATH/config/userconfig.js" "testnet" "  $key: $value,"
+    padding "${ARROW}${GREEN} [FluxOS] ${CYAN}$3${NC}" "${CHECK_MARK}"
+    return
   fi
 }
 
@@ -472,21 +472,21 @@ function config_builder() {
      fi
     fi
     if [[ ! -f $FLUXOS_PATH/config/userconfig.js ]]; then
-     padding "${ARROW}${GREEN} [FluxOS] ${CYAN}Config file does not exist...${NC}" "${X_MARK}"
-     return
+      padding "${ARROW}${GREEN} [FluxOS] ${CYAN}Config file does not exist...${NC}" "${X_MARK}"
+      return
     fi
     if [[ "$1" == ""  || "$2" == "" ]]; then
-     padding "${ARROW}${GREEN} [FluxOS] ${CYAN}Empty key/value skipped${NC}" "${X_MARK}"
-     return
+      padding "${ARROW}${GREEN} [FluxOS] ${CYAN}Empty key/value skipped${NC}" "${X_MARK}"
+      return
     fi
     if [[ $(cat $FLUXOS_PATH/config/userconfig.js | grep "$key") == "" ]]; then
-        insert "$FLUXOS_PATH/config/userconfig.js" "testnet" "    $key: $value,"
-        padding "${ARROW}${GREEN} [FluxOS] ${CYAN}$3 added successfully${NC}" "${CHECK_MARK}"
-        return
+      insert "$FLUXOS_PATH/config/userconfig.js" "testnet" "    $key: $value,"
+      padding "${ARROW}${GREEN} [FluxOS] ${CYAN}$3 added successfully${NC}" "${CHECK_MARK}"
+      return
     fi
     if [[ $(cat $FLUXOS_PATH/config/userconfig.js | grep "$key" | grep "$value_check") != "" ]]; then
-     padding "${ARROW}${GREEN} [FluxOS] ${CYAN}$3 skipped${NC}" "${X_MARK}"
-     return
+      padding "${ARROW}${GREEN} [FluxOS] ${CYAN}$3 skipped${NC}" "${X_MARK}"
+      return
     fi
     if [[ $(cat $FLUXOS_PATH/config/userconfig.js | grep "$key") != "" ]]; then
       RemoveLine "$key"
@@ -497,28 +497,28 @@ function config_builder() {
   #####################################################
   if [[ "$4" == "daemon" ]]; then
     if [[ ! -f $FLUX_DAEMON_PATH/$CONFIG_FILE ]]; then
-       padding "${ARROW}${GREEN} [Daemon] ${CYAN}Config file does not exist...${NC}" "${X_MARK}"
-       return
+      padding "${ARROW}${GREEN} [Daemon] ${CYAN}Config file does not exist...${NC}" "${X_MARK}"
+      return
     fi
     if [[ "$1" == ""  || "$2" == "" ]]; then
-       padding "${ARROW}${GREEN} [Daemon] ${CYAN}Empty key/value skipped${NC}" "${X_MARK}"
-       return
+      padding "${ARROW}${GREEN} [Daemon] ${CYAN}Empty key/value skipped${NC}" "${X_MARK}"
+      return
     fi
     if [[ ! $(grep -w $1 $FLUX_DAEMON_PATH/$CONFIG_FILE) && -f $FLUX_DAEMON_PATH/$CONFIG_FILE ]]; then
       echo "$1=$2" >> $FLUX_DAEMON_PATH/$CONFIG_FILE
       if [[ "$1=$2" == $(grep -w $1 $FLUX_DAEMON_PATH/$CONFIG_FILE) ]]; then
-         padding "${ARROW}${GREEN} [Daemon] ${CYAN}$3 added successfully${NC}" "${CHECK_MARK}"
-	 return
+        padding "${ARROW}${GREEN} [Daemon] ${CYAN}$3 added successfully${NC}" "${CHECK_MARK}"
+	      return
       fi
     fi
     if [[ "$1=$2" == $(grep -w $1 $FLUX_DAEMON_PATH/$CONFIG_FILE) ]]; then
-        padding "${ARROW}${GREEN} [Daemon] ${CYAN}$3 skipped${NC}" "${X_MARK}"
-	return
+      padding "${ARROW}${GREEN} [Daemon] ${CYAN}$3 skipped${NC}" "${X_MARK}"
+      return
     else
-       sed -i "s/$(grep -e $1 $FLUX_DAEMON_PATH/$CONFIG_FILE)/$1=$2/" $FLUX_DAEMON_PATH/$CONFIG_FILE
-       if [[ "$1=$2" == $(grep -w $1 $FLUX_DAEMON_PATH/$CONFIG_FILE) ]]; then
-         padding "${ARROW}${GREEN} [Daemon] ${CYAN}$3 replaced successfully${NC}" "${CHECK_MARK}"
-       fi
+      sed -i "s/$(grep -e $1 $FLUX_DAEMON_PATH/$CONFIG_FILE)/$1=$2/" $FLUX_DAEMON_PATH/$CONFIG_FILE
+      if [[ "$1=$2" == $(grep -w $1 $FLUX_DAEMON_PATH/$CONFIG_FILE) ]]; then
+        padding "${ARROW}${GREEN} [Daemon] ${CYAN}$3 replaced successfully${NC}" "${CHECK_MARK}"
+      fi
     fi
   fi
   ###################################################
@@ -531,39 +531,39 @@ function config_builder() {
       mkdir -p $FLUX_BENCH_PATH > /dev/null 2>&1
       echo "$1=$2" >> $FLUX_BENCH_PATH/fluxbench.conf
       if [[ "$1=$2" == $(grep -w $1 $FLUX_BENCH_PATH/fluxbench.conf) ]]; then
-         padding "${ARROW}${GREEN} [BenchD] ${CYAN}$3 added successfully${NC}" "${CHECK_MARK}"
-	 return
+        padding "${ARROW}${GREEN} [BenchD] ${CYAN}$3 added successfully${NC}" "${CHECK_MARK}"
+	      return
       fi
     fi
     if [[ ! $(grep -w $1 $FLUX_BENCH_PATH/fluxbench.conf) ]]; then
       echo "$1=$2" >> $FLUX_BENCH_PATH/fluxbench.conf
       if [[ "$1=$2" == $(grep -w $1 $FLUX_BENCH_PATH/fluxbench.conf) ]]; then
-         padding "${ARROW}${GREEN} [BenchD] ${CYAN}$3 added successfully${NC}" "${CHECK_MARK}"
-	 return
+        padding "${ARROW}${GREEN} [BenchD] ${CYAN}$3 added successfully${NC}" "${CHECK_MARK}"
+	      return
       fi
     fi
     if [[ "$1=$2" == $(grep -w $1 $FLUX_BENCH_PATH/fluxbench.conf) ]]; then
-        padding "${ARROW}${GREEN} [BenchD] ${CYAN}$3 skipped${NC}" "${X_MARK}"
+      padding "${ARROW}${GREEN} [BenchD] ${CYAN}$3 skipped${NC}" "${X_MARK}"
     else
-       sed -i "s/$(grep -e $1 $FLUX_BENCH_PATH/fluxbench.conf)/$1=$2/" $FLUX_BENCH_PATH/fluxbench.conf
-       if [[ "$1=$2" == $(grep -w $1 $FLUX_BENCH_PATH/fluxbench.conf) ]]; then
-         padding "${ARROW}${GREEN} [BenchD] ${CYAN}$3 replaced successfully${NC}" "${CHECK_MARK}"
-       fi
+      sed -i "s/$(grep -e $1 $FLUX_BENCH_PATH/fluxbench.conf)/$1=$2/" $FLUX_BENCH_PATH/fluxbench.conf
+      if [[ "$1=$2" == $(grep -w $1 $FLUX_BENCH_PATH/fluxbench.conf) ]]; then
+        padding "${ARROW}${GREEN} [BenchD] ${CYAN}$3 replaced successfully${NC}" "${CHECK_MARK}"
+      fi
     fi
   fi
   ###################################################
   if [[ "$4" == "watchdog" ]]; then
    if [[ ! -f "$FLUX_WATCHDOG_PATH/config.js" ]]; then
-       padding "${ARROW}${GREEN} [WatchD] ${CYAN}Config file does not exist...${NC}" "${X_MARK}"
-       return
+      padding "${ARROW}${GREEN} [WatchD] ${CYAN}Config file does not exist...${NC}" "${X_MARK}"
+      return
    fi
    if [[ "$1" == ""  || "$2" == "" ]]; then
-       padding "${ARROW}${GREEN} [WatchD] ${CYAN}Empty key/value skipped${NC}" "${X_MARK}"
-       return
+      padding "${ARROW}${GREEN} [WatchD] ${CYAN}Empty key/value skipped${NC}" "${X_MARK}"
+      return
     fi
     if [[ $(cat $FLUX_WATCHDOG_PATH/config.js | grep "$1: '$2'") != "" ]]; then
-       padding "${ARROW}${GREEN} [WatchD] ${CYAN}$3 skipped${NC}" "${X_MARK}"
-       return
+      padding "${ARROW}${GREEN} [WatchD] ${CYAN}$3 skipped${NC}" "${X_MARK}"
+      return
     fi
     if [[ $(cat $FLUX_WATCHDOG_PATH/config.js | grep "$1") != "" ]]; then
       sed -i "s/$(grep -e $1 $FLUX_WATCHDOG_PATH/config.js)/  $1: '$2',/" $FLUX_WATCHDOG_PATH/config.js
@@ -602,7 +602,6 @@ END
  install_settings=($(jq -r 'keys | @sh' $DATA_PATH/install_conf.json))
  for i in "${install_settings[@]}"
  do
-
    install_key=$(echo $i | tr -d "'")
    key=$(jq -r .$install_key[].key 2> /dev/null  <<< "$config_list")
    if [[ "$key" == "" ]]; then
@@ -1107,7 +1106,7 @@ function  fluxos_clean(){
  fi
 
   echo -e "${ARROW} ${CYAN}Removing syncthing...${NC}"
-	if [[ "$FLUXOS_VERSION" == "" ]]; then
+	if [[ -z $FLUXOS_VERSION ]]; then
     sudo pkill -9 syncthing > /dev/null 2>&1
     sudo apt-get remove --purge syncthing -y > /dev/null 2>&1
     sudo apt-get autoremove -y > /dev/null 2>&1
@@ -1578,7 +1577,7 @@ function daemon_reconfiguration(){
 			fi
 		fi
 	fi
-  if [[ -z $FLUXOS_VERSION]]; then
+  if [[ -z $FLUXOS_VERSION ]]; then
     pm2 restart flux > /dev/null 2>&1
     sudo systemctl start $COIN_NAME  > /dev/null 2>&1 && sleep 2
   else
@@ -1592,7 +1591,6 @@ function daemon_reconfiguration(){
 	echo -e "" && echo -e ""
 }
 function replace_kadena {
-
   if [[ -z "$KDA_A"  ]]; then
 		while true
 		do
@@ -1627,8 +1625,6 @@ function replace_zelid() {
 			sleep 2
 		fi
 	done
-
- 
 	if [[ $(grep -w $new_zelid $FLUXOS_PATH/config/userconfig.js) != "" ]]; then
 		echo -e "${ARROW} ${CYAN}Replace ZEL ID skipped............................[${CHECK_MARK}${CYAN}]${NC}"
 	else
@@ -1640,7 +1636,6 @@ function replace_zelid() {
 }
 
 function thunder_mode(){
-
  if [[ -d $FLUX_BENCH_PATH ]]; then
    sudo chown -R $USER:$USER $FLUX_BENCH_PATH > /dev/null 2>&1
  else
@@ -1659,10 +1654,11 @@ function thunder_mode(){
  fi
  if [[ "$1" == "" ]]; then
     echo -e "${ARROW}${GREEN} [BenchD] ${CYAN}Restarting service... ${NC}"
-    if [[ -z $FLUXOS_VERSION]]; then
+    if [[ -z $FLUXOS_VERSION ]]; then
       sudo systemctl restart zelcash > /dev/null 2>&1
     else
       sudo systemctl restart fluxd > /dev/null 2>&1
+      sudo systemctl restart fluxbenchd > /dev/null 2>&1
     fi
  fi
  
@@ -1674,7 +1670,7 @@ function development_mode(){
     config_builder "development" "true" "Development Mode" "fluxos"
     cd $FLUXOS_PATH
     git checkout development && git pull > /dev/null 2>&1
-    if [[ -z $FLUXOS_VERSION]]; then
+    if [[ -z $FLUXOS_VERSION ]]; then
       pm2 restart flux > /dev/null 2>&1
     else
       sudo systemctl restart fluxos > /dev/null 2>&1
@@ -1684,7 +1680,7 @@ function development_mode(){
     config_builder "development" "false" "Development Mode" "fluxos"
     cd $FLUXOS_PATH
     git checkout master && git pull > /dev/null 2>&1
-    if [[ -z $FLUXOS_VERSION]]; then
+    if [[ -z $FLUXOS_VERSION ]]; then
       pm2 restart flux > /dev/null 2>&1
     else
       sudo systemctl restart fluxos > /dev/null 2>&1
@@ -1993,6 +1989,7 @@ function stop_service() {
 	else
 	  sudo systemctl stop flux-watchdog > /dev/null 2>&1 && sleep 2
 	  sudo systemctl stop fluxd > /dev/null 2>&1 && sleep 2
+    sudo systemctl stop fluxbenchd > /dev/null 2>&1
 	  sudo fuser -k 16125/tcp > /dev/null 2>&1 && sleep 1
 	fi
 	flux_chain_date_wipe
@@ -2002,6 +1999,7 @@ function start_service() {
 	 sudo systemctl start zelcash  > /dev/null 2>&1 && sleep 2
   else
 	 sudo systemctl start fluxd  > /dev/null 2>&1 && sleep 2
+   sudo systemctl start fluxbenchd > /dev/null 2>&1
 	fi
 	NUM='35'
 	MSG1='Starting Flux daemon service...'
@@ -2012,8 +2010,8 @@ function start_service() {
 	  pm2 restart flux > /dev/null 2>&1 && sleep 2
 	  pm2 start watchdog --watch > /dev/null 2>&1 && sleep 2
 	else
-	 sudo systemctl restart fluxos > /dev/null 2>&1 && sleep 2
-	 sudo systemctl start flux-watchdog > /dev/null 2>&1 && sleep 2
+    sudo systemctl restart fluxos > /dev/null 2>&1 && sleep 2
+    sudo systemctl start flux-watchdog > /dev/null 2>&1 && sleep 2
 	fi
 }
 ######### INSTALLATION SECTION ############################
@@ -2803,7 +2801,7 @@ function selfhosting() {
 	sudo chown $USER:$USER $DATA_PATH/ip_check.sh
 	cat <<-'EOF' > $DATA_PATH/ip_check.sh
 	#!/bin/bash
-  if [[ "$FLUXOS_VERSION" == "" ]]; then
+  if [[ -z $FLUXOS_VERSION ]]; then
     DATA_PATH="/home/$USER"
 		FLUXOS_PATH="/home/$USER/zelflux"
   else
@@ -2864,7 +2862,7 @@ function selfhosting() {
 	  crontab -u $USER -l | grep -v 'ip_check'  | crontab -u $USER -
 	fi
 	echo -e "${ARROW} ${CYAN}Adding cron jobs...${NC}" && sleep 1
-	if [[ "$FLUXOS_VERSION" == "" ]]; then
+	if [[ -z $FLUXOS_VERSION ]]; then
     (crontab -l -u "$USER" 2>/dev/null; echo "@reboot env USER=\$LOGNAME \$HOME/ip_check.sh restart") | crontab -
     (crontab -l -u "$USER" 2>/dev/null; echo "*/15 * * * * env USER=\$LOGNAME \$HOME/ip_check.sh ip_check") | crontab -
 	else
@@ -2904,7 +2902,6 @@ function multinode(){
 	sleep 8
 	bash -i <(curl -s https://raw.githubusercontent.com/RunOnFlux/fluxnode-multitool/${ROOT_BRANCH}/multinode.sh)
 }
-
 function analyzer_and_fixer(){
 	echo -e "${GREEN}Module: FluxNode analyzer and fixer${NC}"
 	echo -e "${YELLOW}================================================================${NC}"
