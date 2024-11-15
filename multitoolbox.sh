@@ -48,6 +48,7 @@ function config_veryfity(){
     fi
   fi
 }
+
 function config_file() {
   if [[ -f $DATA_PATH/install_conf.json ]]; then
     import_settings=$(cat $DATA_PATH/install_conf.json | jq -r '.import_settings')
@@ -284,15 +285,14 @@ function create_config() {
  CHOICE=$(whiptail --title "Create FluxNode installation config" --menu "Make your choice" 15 65 8 \
  "1)" "Manualy - fill questions list"   \
  "2)" "Auto - import exists settings"  3>&2 2>&1 1>&3 )
-		case $CHOICE in
-		"1)")
-      manual_build
-		;;
-		"2)")
-      config_smart_create
-		;;
-	  esac
-
+  case $CHOICE in
+  "1)")
+    manual_build
+  ;;
+  "2)")
+    config_smart_create
+  ;;
+  esac
 }
 function install_watchdog() {
 	if [[ "$USER" == "root" || "$USER" == "ubuntu" || "$USER" == "admin" ]]; then

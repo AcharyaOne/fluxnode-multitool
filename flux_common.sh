@@ -1542,8 +1542,16 @@ function daemon_reconfiguration(){
 		exit
 	fi
 	echo -e "${ARROW} ${CYAN}Stopping Flux daemon service...${NC}"
-	sudo systemctl stop $COIN_NAME  > /dev/null 2>&1 && sleep 2
-	sudo fuser -k 16125/tcp > /dev/null 2>&1
+
+  if [[ -z $FLUXOS_VERSION ]]; then
+    sudo systemctl stop $COIN_NAME  > /dev/null 2>&1 && sleep 2
+    sudo fuser -k 16125/tcp > /dev/null 2>&1
+  else
+    sudo systemctl stop flux-watchdog > /dev/null 2>&1 && sleep 2
+    sudo systemctl stop fluxd > /dev/null 2>&1 && sleep 2
+    sudo systemctl stop fluxos  > /dev/null 2>&1 && sleep 2
+  fi
+
 	if [[ "$zelnodeprivkey" != "" ]]; then
 		if [[ "zelnodeprivkey=$zelnodeprivkey" == $(grep -w zelnodeprivkey $FLUX_DAEMON_PATH/$CONFIG_FILE) ]]; then
 			echo -e "${ARROW} ${CYAN}Replace FluxNode Identity Key skipped....................[${CHECK_MARK}${CYAN}]${NC}"
@@ -1581,7 +1589,9 @@ function daemon_reconfiguration(){
     sudo systemctl start $COIN_NAME  > /dev/null 2>&1 && sleep 2
   else
     sudo systemctl start fluxos > /dev/null 2>&1 && sleep 2
-    sudo systemctl start fluxd  > /dev/null 2>&1 && sleep 2
+    sudo systemctl start fluxd  > /dev/null 2>&1 && sleep 2    
+    sudo systemctl restart fluxbenchd  > /dev/null 2>&1 && sleep 2
+    sudo systemctl start flux-watchdog > /dev/null 2>&1 && sleep 2
   fi
 	NUM='35'
 	MSG1='Restarting daemon service...'
