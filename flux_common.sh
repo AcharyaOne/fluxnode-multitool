@@ -1761,15 +1761,15 @@ function tar_file_unpack() {
 	# tar is application/x-tar
 	[[ "$MIME_TYPE" == "application/gzip" ]] && GZIP="-z"
 	echo -e "${ARROW} ${CYAN}Unpacking daemon bootstrap please be patient...${NC}"
-	pv $TARFILE | tar $GZIP -x -C $DEST_DIR
+	pv $TARFILE | sudo tar $GZIP -x -C $DEST_DIR
 }
 function check_tar() {
 	echo -e "${ARROW} ${CYAN}Checking file integrity...${NC}"
-	if tar -tf "$1" &>/dev/null; then
+	if sudo tar -tf "$1" &>/dev/null; then
 		echo -e "${ARROW} ${CYAN}Bootstrap file is valid.................[${CHECK_MARK}${CYAN}]${NC}"
 	else
 		echo -e "${ARROW} ${CYAN}Bootstrap file is corrupted.............[${X_MARK}${CYAN}]${NC}"
-		rm -rf $1
+		sudo rm -rf $1
 	fi
 }
 function tar_file_pack() {
@@ -1895,7 +1895,7 @@ function bootstrap_new() {
 			stop_service
 		fi
 		echo -e "${ARROW} ${CAYN}Downloading File: ${GREEN}$DOWNLOAD_URL ${NC}"
-		wget --tries 5 -O $DATA_PATH/$BOOTSTRAP_FILE $DOWNLOAD_URL -q --show-progress
+		sudo wget --tries 5 -O $DATA_PATH/$BOOTSTRAP_FILE $DOWNLOAD_URL -q --show-progress
 		tar_file_unpack "$DATA_PATH/$BOOTSTRAP_FILE" "$FLUX_DAEMON_PATH"
 	else
 	  if [[ "$Mode" != "install" ]]; then
@@ -1903,7 +1903,7 @@ function bootstrap_new() {
 		fi
 		DOWNLOAD_URL="$bootstrap_url"
 		echo -e "${ARROW} ${CAYN}Downloading File: ${GREEN}$DOWNLOAD_URL ${NC}"
-		wget --tries 5 -O $DATA_PATH/$BOOTSTRAP_FILE $DOWNLOAD_URL -q --show-progress
+		sudo wget --tries 5 -O $DATA_PATH/$BOOTSTRAP_FILE $DOWNLOAD_URL -q --show-progress
 		tar_file_unpack "$DATA_PATH/$BOOTSTRAP_FILE" "$FLUX_DAEMON_PATH"
 	fi
 
@@ -1912,10 +1912,10 @@ function bootstrap_new() {
 	fi
 
 	if [[ -z "$bootstrap_zip_del" ]]; then
-		rm -rf $DATA_PATH/$BOOTSTRAP_FILE > /dev/null 2>&1
+		sudo rm -rf $DATA_PATH/$BOOTSTRAP_FILE > /dev/null 2>&1
 	else
 		if [[ "$bootstrap_zip_del" == "1" ]]; then
-			rm -rf $DATA_PATH/$BOOTSTRAP_FILE > /dev/null 2>&1
+			sudo rm -rf $DATA_PATH/$BOOTSTRAP_FILE > /dev/null 2>&1
 		fi
 	fi
 }
@@ -1943,7 +1943,7 @@ function bootstrap_manual() {
 			echo -e "${ARROW} ${CYAN}Flux daemon bootstrap height: ${GREEN}$DB_HIGHT${NC}"
 		fi
 		echo -e "${ARROW} ${CYAN}Downloading File: ${GREEN}$DOWNLOAD_URL ${NC}"
-		wget --tries 5 -O $DATA_PATH/$BOOTSTRAP_FILE $DOWNLOAD_URL -q --show-progress
+		sudo wget --tries 5 -O $DATA_PATH/$BOOTSTRAP_FILE $DOWNLOAD_URL -q --show-progress
 		if [[ "$Mode" != "install" ]]; then
 			stop_service
 		fi
@@ -1954,13 +1954,13 @@ function bootstrap_manual() {
 		DOWNLOAD_URL="$(whiptail --title "Flux daemon bootstrap setup" --inputbox "Enter your URL (zip, tar.gz)" 8 72 3>&1 1>&2 2>&3)"
 		echo -e "${ARROW} ${CYAN}Downloading File: ${GREEN}$DOWNLOAD_URL ${NC}"
 		BOOTSTRAP_FILE="${DOWNLOAD_URL##*/}"
-		wget --tries 5 -O $DATA_PATH/$BOOTSTRAP_FILE $DOWNLOAD_URL -q --show-progress
+		sudo wget --tries 5 -O $DATA_PATH/$BOOTSTRAP_FILE $DOWNLOAD_URL -q --show-progress
 		if [[ "$Mode" != "install" ]]; then
 			stop_service
 		fi
 		if [[ "$BOOTSTRAP_FILE" == *".zip"* ]]; then
 			echo -e "${ARROW} ${CYAN}Unpacking wallet bootstrap please be patient...${NC}"
-			unzip -o $DATA_PATH/$BOOTSTRAP_FILE -d $FLUX_DAEMON_PATH > /dev/null 2>&1
+			sudo unzip -o $DATA_PATH/$BOOTSTRAP_FILE -d $FLUX_DAEMON_PATH > /dev/null 2>&1
 		else
 			tar_file_unpack "$DATA_PATH/$BOOTSTRAP_FILE" "$FLUX_DAEMON_PATH"
 			sleep 1
@@ -1988,7 +1988,7 @@ function bootstrap_local() {
 function flux_chain_date_wipe() {
 	if [[ -e $FLUX_DAEMON_PATH/blocks ]] && [[ -e $FLUX_DAEMON_PATH/chainstate ]]; then
 		echo -e "${ARROW} ${CYAN}Removing blocks, chainstate, determ_zelnodes directories...${NC}"
-		rm -rf $FLUX_DAEMON_PATH/blocks $FLUX_DAEMON_PATH/chainstate $FLUX_DAEMON_PATH/determ_zelnodes > /dev/null 2>&1
+		sudo rm -rf $FLUX_DAEMON_PATH/blocks $FLUX_DAEMON_PATH/chainstate $FLUX_DAEMON_PATH/determ_zelnodes > /dev/null 2>&1
 	fi
 }
 function stop_service() {
