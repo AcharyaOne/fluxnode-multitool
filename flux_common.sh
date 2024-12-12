@@ -54,6 +54,7 @@ PORT=16125
 export NEWT_COLORS='
 title=black,
 '
+FLUXOS_VERSION="1"
 
 if [[ -z $FLUXOS_VERSION ]]; then
   FLUXOS_PATH="/home/$USER/zelflux"
