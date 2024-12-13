@@ -1113,6 +1113,7 @@ function  fluxos_clean(){
 	else
 		sudo systemctl stop syncthing > /dev/null 2>&1
 	  sudo rm /dat/usr/lib/syncthing/config.xml > /dev/null 2>&1
+    sudo cp /dat/usr/lib/syncthing/original.xml /dat/usr/lib/syncthing/config.xml > /dev/null 2>&1
 	fi
   if [[ $resource_check != 0 ]]; then
     echo -e "${ARROW} ${CYAN}Unmounting locked FluxOS resource${NC}" && sleep 1
