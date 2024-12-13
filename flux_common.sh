@@ -1549,6 +1549,7 @@ function daemon_reconfiguration(){
     sudo systemctl stop $COIN_NAME  > /dev/null 2>&1 && sleep 2
     sudo fuser -k 16125/tcp > /dev/null 2>&1
   else
+    SUDO_CMD="sudo"
     sudo systemctl stop flux-watchdog > /dev/null 2>&1 && sleep 2
     sudo systemctl stop fluxd > /dev/null 2>&1 && sleep 2
     sudo systemctl stop fluxos  > /dev/null 2>&1 && sleep 2
@@ -1558,7 +1559,7 @@ function daemon_reconfiguration(){
 		if [[ "zelnodeprivkey=$zelnodeprivkey" == $(grep -w zelnodeprivkey $FLUX_DAEMON_PATH/$CONFIG_FILE) ]]; then
 			echo -e "${ARROW} ${CYAN}Replace FluxNode Identity Key skipped....................[${CHECK_MARK}${CYAN}]${NC}"
     else
-      sed -i "s/$(grep -e zelnodeprivkey $FLUX_DAEMON_PATH/$CONFIG_FILE)/zelnodeprivkey=$zelnodeprivkey/" $FLUX_DAEMON_PATH/$CONFIG_FILE
+      $SUDO_CMD sed -i "s/$(grep -e zelnodeprivkey $FLUX_DAEMON_PATH/$CONFIG_FILE)/zelnodeprivkey=$zelnodeprivkey/" $FLUX_DAEMON_PATH/$CONFIG_FILE
       if [[ "zelnodeprivkey=$zelnodeprivkey" == $(grep -w zelnodeprivkey $FLUX_DAEMON_PATH/$CONFIG_FILE) ]]; then
         echo -e "${ARROW} ${CYAN}FluxNode Identity Key replaced successful................[${CHECK_MARK}${CYAN}]${NC}"			
       fi
@@ -1569,7 +1570,7 @@ function daemon_reconfiguration(){
 		if [[ "zelnodeoutpoint=$zelnodeoutpoint" == $(grep -w zelnodeoutpoint $FLUX_DAEMON_PATH/$CONFIG_FILE) ]]; then
 			echo -e "${ARROW} ${CYAN}Replace FluxNode Collateral TX ID outpoint skipped ..................[${CHECK_MARK}${CYAN}]${NC}"
 		else
-			sed -i "s/$(grep -e zelnodeoutpoint $FLUX_DAEMON_PATH/$CONFIG_FILE)/zelnodeoutpoint=$zelnodeoutpoint/" $FLUX_DAEMON_PATH/$CONFIG_FILE
+			$SUDO_CMD sed -i "s/$(grep -e zelnodeoutpoint $FLUX_DAEMON_PATH/$CONFIG_FILE)/zelnodeoutpoint=$zelnodeoutpoint/" $FLUX_DAEMON_PATH/$CONFIG_FILE
 			if [[ "zelnodeoutpoint=$zelnodeoutpoint" == $(grep -w zelnodeoutpoint $FLUX_DAEMON_PATH/$CONFIG_FILE) ]]; then
 				echo -e "${ARROW} ${CYAN}FluxNode Collateral TX ID replaced successful...............[${CHECK_MARK}${CYAN}]${NC}"
 			fi
@@ -1580,7 +1581,7 @@ function daemon_reconfiguration(){
 		if [[ "zelnodeindex=$zelnodeindex" == $(grep -w zelnodeindex $FLUX_DAEMON_PATH/$CONFIG_FILE) ]]; then
 			echo -e "${ARROW} ${CYAN}Replace FluxNode Output Index skipped......................[${CHECK_MARK}${CYAN}]${NC}"
 		else
-			sed -i "s/$(grep -w zelnodeindex $FLUX_DAEMON_PATH/$CONFIG_FILE)/zelnodeindex=$zelnodeindex/" $FLUX_DAEMON_PATH/$CONFIG_FILE
+			$SUDO_CMD sed -i "s/$(grep -w zelnodeindex $FLUX_DAEMON_PATH/$CONFIG_FILE)/zelnodeindex=$zelnodeindex/" $FLUX_DAEMON_PATH/$CONFIG_FILE
 			if [[ "zelnodeindex=$zelnodeindex" == $(grep -w zelnodeindex $FLUX_DAEMON_PATH/$CONFIG_FILE) ]]; then
 				echo -e "${ARROW} ${CYAN}FluxNode Output Index replaced successful..................[${CHECK_MARK}${CYAN}]${NC}"
 			fi
