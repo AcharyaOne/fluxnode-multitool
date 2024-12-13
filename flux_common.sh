@@ -54,7 +54,6 @@ PORT=16125
 export NEWT_COLORS='
 title=black,
 '
-FLUXOS_VERSION="1"
 
 if [[ -z $FLUXOS_VERSION ]]; then
   FLUXOS_PATH="/home/$USER/zelflux"
@@ -1762,6 +1761,9 @@ function tar_file_unpack() {
 	[[ "$MIME_TYPE" == "application/gzip" ]] && GZIP="-z"
 	echo -e "${ARROW} ${CYAN}Unpacking daemon bootstrap please be patient...${NC}"
 	pv $TARFILE | sudo tar $GZIP -x -C $DEST_DIR
+  if [[ -n $FLUXOS_VERSION ]]; then
+    sudo chown -R fluxd:fluxd $FLUX_DAEMON_PATH  > /dev/null 2>&1
+  fi
 }
 function check_tar() {
 	echo -e "${ARROW} ${CYAN}Checking file integrity...${NC}"
