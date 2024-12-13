@@ -1099,7 +1099,7 @@ function  fluxos_clean(){
  if [[ $docker_check != 0 ]]; then
    echo -e "${ARROW} ${CYAN}Removing containers...${NC}"
    sudo service docker restart > /dev/null 2>&1 && sleep 2
-   docker container ls -a | egrep 'zelcash|flux' | grep -Eo "^[0-9a-z]{8,}\b" |
+   sudo docker container ls -a | egrep 'zelcash|flux' | grep -Eo "^[0-9a-z]{8,}\b" |
    while read line; do
      sudo docker stop $line > /dev/null 2>&1 && sleep 2
      sudo docker rm $line > /dev/null 2>&1 && sleep 2
