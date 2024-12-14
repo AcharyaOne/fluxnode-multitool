@@ -117,8 +117,9 @@ function install_flux() {
     fi
   else
     echo -e "${ARROW} ${CYAN}Stopping FluxOS....${NC}"
-    sudo systemctl stop flux-watchdog
-    sudo systemctl stop fluxos
+    sudo systemctl stop flux-watchdog > /dev/null 2>&1
+    sudo systemctl stop fluxos > /dev/null 2>&1
+    sudo systemctl stop syncthing > /dev/null 2>&1
   fi
   fluxos_clean
   if [[ -f $FLUXOS_PATH/config/userconfig.js ]]; then
@@ -254,6 +255,7 @@ function install_flux() {
   else
     echo -e "${ARROW} ${CYAN}Starting FluxOS....${NC}"
     echo -e "${ARROW} ${CYAN}FluxOS loading will take 2-3min....${NC}"
+    sudo systemctl start syncthing > /dev/null 2>&1
     sudo systemctl start flux-watchdog > /dev/null 2>&1
     sudo systemctl restart fluxbenchd > /dev/null 2>&1
     sudo systemctl start fluxos > /dev/null 2>&1
