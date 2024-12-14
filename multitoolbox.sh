@@ -772,12 +772,15 @@ function mongod_db_fix() {
         sudo systemctl stop fluxbenchd > /dev/null 2>&1
         sudo systemctl stop fluxos > /dev/null 2>&1
         sudo rm -rf /var/lib/mongodb/*
-        sudo systemctl start mongod
         fluxos_clean
+        echo -e "${ARROW} ${CYAN}Starting mongod service... ${NC}"
+        sudo systemctl start mongod
         sudo systemctl start fluxd > /dev/null 2>&1
         sudo systemctl start fluxbenchd > /dev/null 2>&1
         sudo systemctl start fluxos > /dev/null 2>&1
         sudo systemctl start flux-watchdog > /dev/null 2>&1
+        sudo systemctl start syncthing > /dev/null 2>&1
+        echo -e ""
       fi
 		;;
 	esac
