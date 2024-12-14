@@ -1118,7 +1118,7 @@ function  fluxos_clean(){
     sudo cp /dat/usr/lib/syncthing/original.xml /dat/usr/lib/syncthing/config.xml > /dev/null 2>&1
 	fi
   if [[ $resource_check != 0 ]]; then
-    echo -e "${ARROW} ${CYAN}Unmounting locked FluxOS resource${NC}" && sleep 1
+    echo -e "${ARROW} ${CYAN}Unmounting locked FluxOS resource...${NC}" && sleep 1
     df | grep 'flux' | grep -v 'flux_crypt' | awk '{ print $1 }' |
     while read line; do
       echo -e "${CYAN}Unmounting - $line ...${NC}" && sleep 1
