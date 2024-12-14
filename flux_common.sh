@@ -1121,6 +1121,7 @@ function  fluxos_clean(){
     echo -e "${ARROW} ${CYAN}Unmounting locked FluxOS resource${NC}" && sleep 1
     df | egrep 'flux' | awk '{ print $1}' |
     while read line; do
+      echo -e "${CYAN}Unmounting - $line ${NC}" 
       sudo umount -l $line && sleep 1
     done
   fi
