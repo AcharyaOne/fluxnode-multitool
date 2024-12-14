@@ -100,13 +100,15 @@ function config_file() {
 function install_flux() {
   echo -e "${GREEN}Module: Re-install FluxOS${NC}"
   echo -e "${YELLOW}================================================================${NC}"
-  if [[ "$USER" == "root" || "$USER" == "ubuntu" ]]; then
-    echo -e "${CYAN}You are currently logged in as ${GREEN}$USER${NC}"
-    echo -e "${CYAN}Please switch to the user account.${NC}"
-    echo -e "${YELLOW}================================================================${NC}"
-    echo -e "${NC}"
-    exit
-  fi
+  if [[ -z $FLUXOS_VERSION ]]; then
+    if [[ "$USER" == "root" || "$USER" == "ubuntu" ]]; then
+      echo -e "${CYAN}You are currently logged in as ${GREEN}$USER${NC}"
+      echo -e "${CYAN}Please switch to the user account.${NC}"
+      echo -e "${YELLOW}================================================================${NC}"
+      echo -e "${NC}"
+      exit
+    fi
+  fi  
   if [[ -z $FLUXOS_VERSION ]]; then
     if pm2 -v > /dev/null 2>&1; then
       pm2 del zelflux > /dev/null 2>&1
