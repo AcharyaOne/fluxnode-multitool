@@ -647,7 +647,7 @@ function install_docker(){
 	fi
 }
 function mongod_db_fix() {
-	echo -e "${GREEN}Module: MongoDB FiX action${NC}"
+	echo -e "${GREEN}Module: MongoDB Repair Assistant${NC}"
 	echo -e "${YELLOW}================================================================${NC}"
   if [[ -z $FLUXOS_VERSION ]]; then
     if [[ "$USER" == "root" || "$USER" == "ubuntu" || "$USER" == "admin" ]]; then
@@ -660,7 +660,7 @@ function mongod_db_fix() {
   fi
 	if [[ -z $FLUXOS_VERSION ]]; then
     CHOICE=$(
-      whiptail --title "MongoDB FiX action" --menu "Make your choice" 15 65 8 \
+      whiptail --title "MongoDB Repair Assistant" --menu "Make your choice" 15 65 8 \
       "1)" "Soft repair - MongoDB database repair"   \
       "2)" "Hard repair - MongoDB re-install"  3>&2 2>&1 1>&3
     )
@@ -675,16 +675,16 @@ function mongod_db_fix() {
 		"1)")
       echo -e ""  
       echo -e "${ARROW} ${YELLOW}Soft repair starting... ${NC}" 
-      echo -e "${ARROW} ${CYAN}Stopping mongod service ${NC}" 
+      echo -e "${ARROW} ${CYAN}Stopping MongoDB service ${NC}" 
       sudo systemctl stop mongod
-      echo -e "${ARROW} ${CYAN}Fix for corrupted DB ${NC}"
+      echo -e "${ARROW} ${CYAN}Fixing corrupted DB ${NC}"
       sudo rm $MONGODB_DATA_PATH/journal/* > /dev/null 2>&1
       sudo rm $MONGODB_DATA_PATH/mongod.lock > /dev/null 2>&1
       sudo -u mongodb mongod --dbpath $MONGODB_DATA_PATH --repair > /dev/null 2>&1
-      echo -e "${ARROW} ${CYAN}Fix for bad privilege ${NC}" 
+      echo -e "${ARROW} ${CYAN}Setting privilege ${NC}" 
       sudo chown -R mongodb:mongodb $MONGODB_DATA_PATH > /dev/null 2>&1
       sudo chown mongodb:mongodb /tmp/mongodb-27017.sock > /dev/null 2>&1
-      echo -e "${ARROW} ${CYAN}Starting mongod service ${NC}" 
+      echo -e "${ARROW} ${CYAN}Starting MongoDB service ${NC}" 
       sudo systemctl start mongod
       if mongod --version > /dev/null 2>&1; then
         string_limit_check_mark "MongoDB $(mongod --version | grep 'db version' | sed 's/db version.//') installed................................." "MongoDB ${GREEN}$(mongod --version | grep 'db version' | sed 's/db version.//')${CYAN} installed................................."
@@ -705,7 +705,7 @@ function mongod_db_fix() {
 		"2)")
 			echo -e ""  
 			echo -e "${ARROW} ${YELLOW}Hard repair starting... ${NC}" 
-			echo -e "${ARROW} ${CYAN}Stopping mongod service...${NC}" 
+			echo -e "${ARROW} ${CYAN}Stopping MongoDB service...${NC}" 
 			sudo systemctl stop mongod 
       if [[ -z $FLUXOS_VERSION ]]; then 
         echo -e "${ARROW} ${CYAN}Removing MongoDB... ${NC}" 
@@ -781,16 +781,16 @@ function mongod_db_fix() {
         fluxos_clean
         echo -e "${ARROW} ${CYAN}Starting MongoDB service... ${NC}"
         sudo systemctl start mongod > /dev/null 2>&1
+        echo -e "${ARROW} ${CYAN}Starting Syncthing service... ${NC}"
+        sudo systemctl start syncthing > /dev/null 2>&1
+        echo -e "${ARROW} ${CYAN}Starting FluxOS service... ${NC}"
+        sudo systemctl start fluxos > /dev/null 2>&1
         echo -e "${ARROW} ${CYAN}Starting Fluxd service... ${NC}"
         sudo systemctl start fluxd > /dev/null 2>&1
         echo -e "${ARROW} ${CYAN}Starting Fluxbench service... ${NC}"
         sudo systemctl start fluxbenchd > /dev/null 2>&1
-        echo -e "${ARROW} ${CYAN}Starting FluxOS service... ${NC}"
-        sudo systemctl start fluxos > /dev/null 2>&1
         echo -e "${ARROW} ${CYAN}Starting Flux Watchdog service... ${NC}"
         sudo systemctl start flux-watchdog > /dev/null 2>&1
-        echo -e "${ARROW} ${CYAN}Starting Syncthing service... ${NC}"
-        sudo systemctl start syncthing > /dev/null 2>&1
         if mongod --version > /dev/null 2>&1; then
           string_limit_check_mark "MongoDB $(mongod --version | grep 'db version' | sed 's/db version.//') installed................................." "MongoDB ${GREEN}$(mongod --version | grep 'db version' | sed 's/db version.//')${CYAN} installed................................."
           echo -e "${ARROW} ${CYAN}Service status:${SEA} $(sudo systemctl status mongod | grep -w 'Active' | sed -e 's/^[ \t]*//')${NC}" 
@@ -915,7 +915,7 @@ if [[ -z $FLUXOS_VERSION ]]; then
   echo -e "${CYAN}9  - Create Flux daemon service${NC}"
   echo -e "${CYAN}10 - Create Self-hosting cron ip service ${NC}"
   echo -e "${CYAN}11 - FluxOS config management ${NC}"
-  echo -e "${CYAN}12 - MongoDB Repair Action${NC}"
+  echo -e "${CYAN}12 - MongoDB Repair Assistant${NC}"
   echo -e "${CYAN}13 - Multinode configuration with UPNP communication (Needs Router with UPNP support)${NC}"
   echo -e "${CYAN}14 - Node reconfiguration from install config${NC}"
   echo -e "${CYAN}15 - Hardware benchmark${NC}"
@@ -925,7 +925,7 @@ else
   echo -e "${CYAN}2 - Flux Daemon Reconfiguration${NC}"
   echo -e "${CYAN}3 - FluxOS Config Management${NC}"
   echo -e "${CYAN}4 - Restore Flux blockchain from bootstrap${NC}"
-  echo -e "${CYAN}5 - MongoDB Repair Action${NC}"
+  echo -e "${CYAN}5 - MongoDB Repair Assistant${NC}"
   echo -e "${CYAN}6 - Multinode configuration with UPNP communication (Needs Router with UPNP support)${NC}"
   echo -e "${CYAN}7 - Node reconfiguration from install config${NC}"
   echo -e "${CYAN}8 - Hardware benchmark${NC}"
