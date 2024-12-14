@@ -262,13 +262,15 @@ function install_flux() {
 function create_config() {
   echo -e "${GREEN}Module: Create FluxNode installation config file...${NC}"
   echo -e "${YELLOW}================================================================${NC}"
-  if [[ "$USER" == "root" || "$USER" == "ubuntu" || "$USER" == "admin" ]]; then
-    echo -e "${CYAN}You are currently logged in as ${GREEN}$USER${NC}"
-    echo -e "${CYAN}Please switch to the user account.${NC}"
-    echo -e "${YELLOW}================================================================${NC}"
-    echo -e "${NC}"
-    exit
-  fi 
+  if [[ -z $FLUXOS_VERSION ]]; then
+    if [[ "$USER" == "root" || "$USER" == "ubuntu" || "$USER" == "admin" ]]; then
+      echo -e "${CYAN}You are currently logged in as ${GREEN}$USER${NC}"
+      echo -e "${CYAN}Please switch to the user account.${NC}"
+      echo -e "${YELLOW}================================================================${NC}"
+      echo -e "${NC}"
+      exit
+    fi 
+  fi
   if jq --version > /dev/null 2>&1; then
   sleep 0.2
   else
@@ -297,13 +299,15 @@ function create_config() {
   esac
 }
 function install_watchdog() {
-	if [[ "$USER" == "root" || "$USER" == "ubuntu" || "$USER" == "admin" ]]; then
-		echo -e "${CYAN}You are currently logged in as ${GREEN}$USER${NC}"
-		echo -e "${CYAN}Please switch to the user account.${NC}"
-		echo -e "${YELLOW}================================================================${NC}"
-		echo -e "${NC}"
-		exit
-	fi
+  if [[ -z $FLUXOS_VERSION ]]; then
+	  if [[ "$USER" == "root" || "$USER" == "ubuntu" || "$USER" == "admin" ]]; then
+		  echo -e "${CYAN}You are currently logged in as ${GREEN}$USER${NC}"
+		  echo -e "${CYAN}Please switch to the user account.${NC}"
+		  echo -e "${YELLOW}================================================================${NC}"
+		  echo -e "${NC}"
+	  	exit
+	  fi
+  fi
 	echo -e "${GREEN}Module: Install watchdog for FluxNode${NC}"
 	echo -e "${YELLOW}================================================================${NC}"
 	echo -e "${ARROW} ${CYAN}Cleaning...${NC}"
@@ -497,16 +501,18 @@ function install_watchdog() {
 	echo -e ""
 }
 function flux_daemon_bootstrap() {
-	echo -e "${GREEN}Module: Restore Flux blockchain from bootstrap${NC}"
+  echo -e "${GREEN}Module: Restore Flux blockchain from bootstrap${NC}"
 	echo -e "${YELLOW}================================================================${NC}"
-	if [[ "$USER" == "root" || "$USER" == "ubuntu" || "$USER" == "admin" ]]; then    
-		echo -e "${CYAN}You are currently logged in as ${GREEN}$USER${NC}"
-		echo -e "${CYAN}Please switch to the user account.${NC}"
-		echo -e "${YELLOW}================================================================${NC}"
-		echo -e "${NC}"
-		exit
+  if [[ -z $FLUXOS_VERSION ]]; then
+	  if [[ "$USER" == "root" || "$USER" == "ubuntu" || "$USER" == "admin" ]]; then    
+		  echo -e "${CYAN}You are currently logged in as ${GREEN}$USER${NC}"
+		  echo -e "${CYAN}Please switch to the user account.${NC}"
+	    echo -e "${YELLOW}================================================================${NC}"
+      echo -e "${NC}"
+		  exit
+   fi 
 	fi
-	cd
+  cd
 	echo -e "${NC}"
 	config_veryfity
 	bootstrap_new
@@ -641,13 +647,15 @@ function install_docker(){
 function mongod_db_fix() {
 	echo -e "${GREEN}Module: MongoDB FiX action${NC}"
 	echo -e "${YELLOW}================================================================${NC}"
-  if [[ "$USER" == "root" || "$USER" == "ubuntu" || "$USER" == "admin" ]]; then
-		echo -e "${CYAN}You are currently logged in as ${GREEN}$USER${NC}"
-		echo -e "${CYAN}Please switch to the user account.${NC}"
-		echo -e "${YELLOW}================================================================${NC}"
-		echo -e "${NC}"
-		exit
-	fi 
+  if [[ -z $FLUXOS_VERSION ]]; then
+    if [[ "$USER" == "root" || "$USER" == "ubuntu" || "$USER" == "admin" ]]; then
+		  echo -e "${CYAN}You are currently logged in as ${GREEN}$USER${NC}"
+		  echo -e "${CYAN}Please switch to the user account.${NC}"
+		  echo -e "${YELLOW}================================================================${NC}"
+	  	echo -e "${NC}"
+	  	exit
+	  fi 
+  fi
 	if [[ -z $FLUXOS_VERSION ]]; then
     CHOICE=$(
       whiptail --title "MongoDB FiX action" --menu "Make your choice" 15 65 8 \
@@ -967,13 +975,6 @@ case "$REPLY" in
     else
       echo -e "${GREEN}Module: Node reconfiguration from install config${NC}"
       echo -e "${YELLOW}================================================================${NC}"
-      if [[ "$USER" == "root" || "$USER" == "ubuntu" || "$USER" == "admin" ]]; then    
-        echo -e "${CYAN}You are currently logged in as ${GREEN}$USER${NC}"
-        echo -e "${CYAN}Please switch to the user account.${NC}"
-        echo -e "${YELLOW}================================================================${NC}"
-        echo -e "${NC}"
-        exit
-      fi
 	    node_reconfiguration
 	    echo -e ""
     fi
@@ -986,13 +987,6 @@ case "$REPLY" in
     else
       echo -e "${GREEN}Module: Hardware benchmark${NC}"
       echo -e "${YELLOW}================================================================${NC}"
-      if [[ "$USER" == "root" || "$USER" == "ubuntu" || "$USER" == "admin" ]]; then    
-        echo -e "${CYAN}You are currently logged in as ${GREEN}$USER${NC}"
-        echo -e "${CYAN}Please switch to the user account.${NC}"
-        echo -e "${YELLOW}================================================================${NC}"
-        echo -e "${NC}"
-        exit
-      fi
       bash -i <(curl -s https://raw.githubusercontent.com/RunOnFlux/fluxnode-multitool/$ROOT_BRANCH/hardwarebench.sh)
     fi
  ;;
