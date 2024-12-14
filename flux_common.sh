@@ -64,6 +64,7 @@ if [[ -z $FLUXOS_VERSION ]]; then
   MONGODB_DATA_PATH="/var/lib/mongodb"
   MONGODB_LOG_PATH="/var/log/mongodb"
 	FLUX_DAEMON_SERVICE="zelflux"
+  FLUX_APPS_FOLDER="$FLUXOS_PATH/ZelApps"
 else
   FLUXOS_PATH="/dat/usr/lib/fluxos"
   FLUX_WATCHDOG_PATH="/dat/usr/lib/fluxwatchdog"
@@ -73,6 +74,7 @@ else
   MONGODB_DATA_PATH="/dat/var/lib/mongodb"
   MONGODB_LOG_PATH="/dat/var/log/mongodb"
 	FLUX_DAEMON_SERVICE="fluxd"
+  FLUX_APPS_FOLDER="/dat/var/lib/fluxos/flux-apps"
 fi
 
 ##### CONFIGS SECTION ######################################
@@ -1094,7 +1096,7 @@ function os_check(){
 }
 
 function  fluxos_clean(){
- docker_check=$(docker container ls -a | egrep 'zelcash|flux' | grep -Eo "^[0-9a-z]{8,}\b" | wc -l)
+ docker_check=$(sudo docker container ls -a | egrep 'zelcash|flux' | grep -Eo "^[0-9a-z]{8,}\b" | wc -l)
  resource_check=$(df | egrep 'flux' | awk '{ print $1}' | wc -l)
  if [[ $docker_check != 0 ]]; then
    echo -e "${ARROW} ${CYAN}Removing containers...${NC}"
@@ -1122,14 +1124,14 @@ function  fluxos_clean(){
       sudo umount -l $line && sleep 1
     done
   fi
-  if [[ -d $FLUXOS_PATH/ZelApps && $(find $FLUXOS_PATH/ZelApps -maxdepth 1 -mindepth 1 -type d | wc -l) -gt 1 ]]; then
+  if [[ -d $FLUX_APPS_FOLDER && $(find $FLUX_APPS_FOLDER -maxdepth 1 -mindepth 1 -type d | wc -l) -gt 1 ]]; then
     echo -e "${ARROW} ${CYAN}Cleaning FluxOS Apps directory...${NC}" && sleep 1
-    APPS_LIST=($(find $FLUXOS_PATH/ZelApps -maxdepth 1 -mindepth 1 -type d -printf '%P\n'))
+    APPS_LIST=($(find $FLUX_APPS_FOLDER -maxdepth 1 -mindepth 1 -type d -printf '%P\n'))
     LENGTH=${#APPS_LIST[@]}
     for (( j=0; j<${LENGTH}; j++ ));
     do
       if [[ "${APPS_LIST[$j]}" != "ZelShare" && "${APPS_LIST[$j]}" != "" ]]; then
-        echo -e "${ARROW} ${CYAN}Apps directory removed, path: ${GREEN}$FLUXOS_PATH/ZelApps/${APPS_LIST[$j]}${NC}"
+        echo -e "${ARROW} ${CYAN}Apps directory removed, path: ${GREEN}$FLUX_APPS_FOLDER/${APPS_LIST[$j]}${NC}"
         sudo rm -rf $FLUXOS_PATH/ZelApps/${APPS_LIST[$j]}
      fi
     done
