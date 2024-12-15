@@ -12,7 +12,10 @@ function upnp_disable() {
     if [[ $(grep -e "fluxport" $FLUX_BENCH_PATH/fluxbench.conf) != "" ]]; then
       echo -e ""
       echo -e "${ARROW} ${YELLOW}Removing FluxOS UPnP configuration.....${NC}"
-      sed -i "/$(grep -e "fluxport" $FLUX_BENCH_PATH/fluxbench.conf)/d" $FLUX_BENCH_PATH/fluxbench.conf > /dev/null 2>&1
+      if [[ -n $FLUXOS_VERSION ]]; then
+        SUDO_CMD="sudo"
+      fi
+      $SUDO_CMD sed -i "/$(grep -e "fluxport" $FLUX_BENCH_PATH/fluxbench.conf)/d" $FLUX_BENCH_PATH/fluxbench.conf > /dev/null 2>&1
     else
       echo -e "${ARROW} ${CYAN}UPnP Mode is already disabled...${NC}"
       echo -e ""
