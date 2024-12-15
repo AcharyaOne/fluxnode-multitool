@@ -2932,7 +2932,11 @@ function multinode(){
 		exit
 	fi  
 	sleep 8
-	bash -i <(curl -s https://raw.githubusercontent.com/RunOnFlux/fluxnode-multitool/${ROOT_BRANCH}/multinode.sh)
+ if [[ -f "/usr/lib/multitoolbox/multinode.sh" ]]; then
+   bash -i "/usr/lib/multitoolbox/multinode.sh"
+ else
+   bash -i <(curl -s https://raw.githubusercontent.com/RunOnFlux/fluxnode-multitool/${ROOT_BRANCH}/multinode.sh)
+ fi
 }
 function analyzer_and_fixer(){
 	echo -e "${GREEN}Module: FluxNode analyzer and fixer${NC}"
@@ -2944,5 +2948,9 @@ function analyzer_and_fixer(){
 		echo -e "${NC}"
 		exit
 	fi
-	bash -i <(curl -s https://raw.githubusercontent.com/RunOnFlux/fluxnode-multitool/${ROOT_BRANCH}/nodeanalizerandfixer.sh)
+  if [[ -f "/usr/lib/multitoolbox/nodeanalizerandfixer.sh" ]]; then
+   bash -i "/usr/lib/multitoolbox/nodeanalizerandfixer.sh"
+  else
+   bash -i <(curl -s https://raw.githubusercontent.com/RunOnFlux/fluxnode-multitool/${ROOT_BRANCH}/nodeanalizerandfixer.sh)
+  fi
 }
