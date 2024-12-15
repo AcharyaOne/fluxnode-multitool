@@ -104,8 +104,15 @@ function fluxos_conf_create(){
 	else
 		testnet=false
 	fi
-	touch $FLUXOS_PATH/config/userconfig.js
-	cat <<- EOF >| $FLUXOS_PATH/config/userconfig.js
+ 
+  if [[ -n $FLUXOS_VERSION ]]; then
+    FLUXOS_CONFIG="/tmp"
+  else
+    FLUXOS_CONFIG="$FLUXOS_PATH/config"
+  fi
+  
+	touch $FLUXOS_CONFIG/userconfig.js
+	cat <<- EOF >| $FLUXOS_CONFIG/userconfig.js
 module.exports = {
   initial: {
     ipaddress: '${WANIP}',
@@ -117,6 +124,10 @@ module.exports = {
   }
 }
 EOF
+if [[ -n $FLUXOS_VERSION ]]; then
+  sudo mv $FLUXOS_CONFIG/userconfig.js $FLUXOS_PATH/config/userconfig.js
+fi
+
 }
 
 function flux_daemon_conf_create() {
