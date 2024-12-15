@@ -227,7 +227,10 @@ function insert() {
 }
 
 function RemoveLine(){
-  sed -i "/$1/d" $FLUXOS_PATH/config/userconfig.js
+  if [[ -n $FLUXOS_VERSION ]]; then
+    SUDO_CMD="sudo"
+  fi
+  $SUDO_CMD sed -i "/$1/d" $FLUXOS_PATH/config/userconfig.js
 }
 
 function ClearList() {
