@@ -1015,7 +1015,11 @@ case "$REPLY" in
     else
       echo -e "${GREEN}Module: Hardware benchmark${NC}"
       echo -e "${YELLOW}================================================================${NC}"
-      bash -i <(curl -s https://raw.githubusercontent.com/RunOnFlux/fluxnode-multitool/$ROOT_BRANCH/hardwarebench.sh)
+      if [[ -n $FLUXOS_VERSION ]]; then
+        bash -i "/usr/lib/multitoolbox/hardwarebench.sh"
+      else
+        bash -i <(curl -s https://raw.githubusercontent.com/RunOnFlux/fluxnode-multitool/$ROOT_BRANCH/hardwarebench.sh)
+      fi
     fi
  ;;
  9)
