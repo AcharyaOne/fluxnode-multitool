@@ -167,7 +167,10 @@ function install_flux() {
     FLUXOS_HOME_DIR="zelflux"
   fi
   echo -e "${ARROW} ${CYAN}FluxOS downloading...${NC}"
-  git clone https://github.com/RunOnFlux/flux.git $FLUXOS_HOME_DIR > /dev/null 2>&1 && sleep 1
+  if [[ -n $FLUXOS_VERSION ]]; then 
+    SUDO_CMD="sudo"
+  fi
+  $SUDO_CMD git clone https://github.com/RunOnFlux/flux.git $FLUXOS_HOME_DIR > /dev/null 2>&1 && sleep 1
   if [[ -d $FLUXOS_PATH ]]; then
     if [[ -f $FLUXOS_PATH/package.json ]]; then
       current_ver=$(jq -r '.version' $FLUXOS_PATH/package.json)
