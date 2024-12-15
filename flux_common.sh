@@ -1665,17 +1665,21 @@ function replace_zelid() {
 }
 
 function thunder_mode(){
- if [[ -d $FLUX_BENCH_PATH ]]; then
-   sudo chown -R $USER:$USER $FLUX_BENCH_PATH > /dev/null 2>&1
- else
-   mkdir -p  $FLUX_BENCH_PATH > /dev/null 2>&1
+ if [[ -z $FLUXOS_VERSION ]]; then
+   if [[ -d $FLUX_BENCH_PATH ]]; then
+     sudo chown -R $USER:$USER $FLUX_BENCH_PATH > /dev/null 2>&1
+   else
+     mkdir -p  $FLUX_BENCH_PATH > /dev/null 2>&1
+   fi
  fi
- 
  if [[ -f $FLUX_BENCH_PATH/fluxbench.conf ]]; then
    if [[ $(grep -e "thunder"  $FLUX_BENCH_PATH/fluxbench.conf) == "" ]]; then
      config_builder "thunder" "1" "Thunder Mode" "benchmark"
    else
-     sed -i "/$(grep -e "thunder"  $FLUX_BENCH_PATH/fluxbench.conf)/d"  $FLUX_BENCH_PATH/fluxbench.conf > /dev/null 2>&1
+     if [[ -n $FLUXOS_VERSION ]]; then
+      SUDO_CMD="sudo"
+     fi
+     $SUDO_CMD sed -i "/$(grep -e "thunder"  $FLUX_BENCH_PATH/fluxbench.conf)/d"  $FLUX_BENCH_PATH/fluxbench.conf > /dev/null 2>&1
      echo -e "${ARROW}${GREEN} [BenchD] ${CYAN}Thunder Mode disabled successful${NC}" "${CHECK_MARK}"
    fi
  else
@@ -1698,7 +1702,10 @@ function development_mode(){
     echo -e "${ARROW}${GREEN} [FluxOS] ${CYAN}Enabling development mode... ${NC}"
     config_builder "development" "true" "Development Mode" "fluxos"
     cd $FLUXOS_PATH
-    git checkout development && git pull > /dev/null 2>&1
+    if [[ -n $FLUXOS_VERSION ]]; then
+      SUDO_CMD="sudo"
+    fi
+    $SUDO_CMD git checkout development && git pull > /dev/null 2>&1
     if [[ -z $FLUXOS_VERSION ]]; then
       pm2 restart flux > /dev/null 2>&1
     else
@@ -1708,7 +1715,10 @@ function development_mode(){
     echo -e "${ARROW}${GREEN} [FluxOS] ${CYAN}Disabling development mode... ${NC}"
     config_builder "development" "false" "Development Mode" "fluxos"
     cd $FLUXOS_PATH
-    git checkout master && git pull > /dev/null 2>&1
+     if [[ -n $FLUXOS_VERSION ]]; then
+      SUDO_CMD="sudo"
+    fi
+    $SUDO_CMD git checkout master && git pull > /dev/null 2>&1
     if [[ -z $FLUXOS_VERSION ]]; then
       pm2 restart flux > /dev/null 2>&1
     else
