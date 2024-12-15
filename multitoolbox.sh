@@ -272,6 +272,7 @@ function install_flux() {
     sudo npm install > /dev/null 2>&1
     echo -e "${ARROW} ${CYAN}Starting FluxOS....${NC}"
     echo -e "${ARROW} ${CYAN}FluxOS loading will take 2-3min....${NC}"
+    echo
     sudo systemctl start syncthing > /dev/null 2>&1
     sudo systemctl start flux-watchdog > /dev/null 2>&1
     sudo systemctl restart fluxbenchd > /dev/null 2>&1
