@@ -1,5 +1,9 @@
 #!/bin/bash
-source /dev/stdin <<< "$(curl -s https://raw.githubusercontent.com/RunOnFlux/fluxnode-multitool/${ROOT_BRANCH}/flux_common.sh)"
+if [[ -f "/usr/lib/multitoolbox/flux_common.sh" ]]; then
+  source "/usr/lib/multitoolbox/flux_common.sh"
+else
+  source /dev/stdin <<< "$(curl -s "https://raw.githubusercontent.com/RunOnFlux/fluxnode-multitool/$ROOT_BRANCH/flux_common.sh")"
+fi
 
 function upnp_disable() {
   if [[ ! -f $FLUXOS_PATH/config/userconfig.js ]]; then
