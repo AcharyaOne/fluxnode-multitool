@@ -269,7 +269,7 @@ function install_flux() {
   else
     echo -e "${ARROW} ${CYAN}Installing FluxOS dependencies....${NC}"
     cd $FLUXOS_PATH
-    sudo npm install > /dev/null 2>&1
+    sudo npm install --omit=dev --cache /dat/usr/lib/npm  > /dev/null 2>&1
     echo -e "${ARROW} ${CYAN}Starting FluxOS....${NC}"
     echo -e "${ARROW} ${CYAN}FluxOS loading will take 2-3min....${NC}"
     echo
