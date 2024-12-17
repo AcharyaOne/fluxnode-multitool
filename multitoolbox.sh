@@ -945,7 +945,7 @@ else
   echo -e "${CYAN}4 - Restore Flux blockchain from bootstrap${NC}"
   echo -e "${CYAN}5 - MongoDB Repair Assistant${NC}"
   echo -e "${CYAN}6 - Multinode configuration with UPNP communication (Needs Router with UPNP support)${NC}"
-  echo -e "${CYAN}7 - Node reconfiguration from install config${NC}"
+  echo -e "${CYAN}7 - FluxNode Diagnostics${NC}"
   echo -e "${CYAN}8 - Hardware benchmark${NC}"
   echo -e "${YELLOW}================================================================${NC}"
 fi
@@ -1011,9 +1011,7 @@ case "$REPLY" in
     if [[ -z $FLUXOS_VERSION ]]; then
       install_flux
     else
-      echo -e "${GREEN}Module: Node reconfiguration from install config${NC}"
-      echo -e "${YELLOW}================================================================${NC}"
-	    node_reconfiguration
+      analyzer_and_fixer
 	    echo -e ""
     fi
  ;;
