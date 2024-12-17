@@ -265,6 +265,8 @@ if [[ -n $FLUXOS_VERSION ]]; then
           bench_status=$(jq -r '.status' <<< "$bench_getatus")
           bench_benchmark=$(jq -r '.benchmarking' <<< "$bench_getatus")
           bench_back=$(jq -r '.zelback' <<< "$bench_getatus")
+          bench_systemsecure=$(jq -r '.systemsecure' <<< "$bench_getatus")
+          
           if [[ "$bench_back" == "null" ]]; then
                   bench_back=$(jq -r '.flux' <<< "$bench_getatus")
           fi
@@ -289,7 +291,14 @@ if [[ -n $FLUXOS_VERSION ]]; then
           else
                   bench_back_color="${RED}$bench_back"
           fi
-  
+
+          if [[ "$bench_systemsecure" == "true" ]]; then
+                  bench_systemsecure_color="${SEA}$bench_systemsecure"
+          else
+                  bench_systemsecure_color="${RED}$bench_systemsecure"
+          fi
+
+          echo -e "${PIN} ${CYAN}Flux system secure: ${SEA}$bench_systemsecure_color${NC}"
           echo -e "${PIN} ${CYAN}Flux benchmark version: ${SEA}$bench_version${NC}"
           echo -e "${PIN} ${CYAN}Flux benchmark status: $bench_status_color${NC}"
           echo -e "${PIN} ${CYAN}Benchmark: $bench_benchmark_color${NC}"
