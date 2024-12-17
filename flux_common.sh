@@ -2917,13 +2917,15 @@ function selfhosting() {
 function multinode(){
 	echo -e "${GREEN}Module: Multinode configuration with UPNP communication (Needs Router with UPNP support)${NC}"
 	echo -e "${YELLOW}================================================================${NC}"
-	if [[ "$USER" == "root" || "$USER" == "ubuntu" || "$USER" == "admin" ]]; then
-		echo -e "${CYAN}You are currently logged in as ${GREEN}$USER${NC}"
-		echo -e "${CYAN}Please switch to the user account.${NC}"
-		echo -e "${YELLOW}================================================================${NC}"
-		echo -e "${NC}"
-		exit
-	fi
+  if [[ -z $FLUXOS_VERSION ]]; then
+  	if [[ "$USER" == "root" || "$USER" == "ubuntu" || "$USER" == "admin" ]]; then
+  		echo -e "${CYAN}You are currently logged in as ${GREEN}$USER${NC}"
+  		echo -e "${CYAN}Please switch to the user account.${NC}"
+  		echo -e "${YELLOW}================================================================${NC}"
+  		echo -e "${NC}"
+  		exit
+  	fi
+  fi
 	echo -e ""
 	echo -e "${ARROW}  ${CYAN}OPTION ALLOWS YOU: ${NC}"
 	echo -e "${HOT} ${CYAN}Run node as selfhosting with upnp communication ${NC}"
@@ -2949,15 +2951,17 @@ function multinode(){
  fi
 }
 function analyzer_and_fixer(){
-	echo -e "${GREEN}Module: FluxNode analyzer and fixer${NC}"
+	echo -e "${GREEN}Module: FluxNode Diagnostics${NC}"
 	echo -e "${YELLOW}================================================================${NC}"
-	if [[ "$USER" == "root" || "$USER" == "ubuntu" || "$USER" == "admin" ]]; then
-		echo -e "${CYAN}You are currently logged in as ${GREEN}$USER${NC}"
-		echo -e "${CYAN}Please switch to the user account.${NC}"
-		echo -e "${YELLOW}================================================================${NC}"
-		echo -e "${NC}"
-		exit
-	fi
+  if [[ -z $FLUXOS_VERSION ]]; then
+  	if [[ "$USER" == "root" || "$USER" == "ubuntu" || "$USER" == "admin" ]]; then
+  		echo -e "${CYAN}You are currently logged in as ${GREEN}$USER${NC}"
+  		echo -e "${CYAN}Please switch to the user account.${NC}"
+  		echo -e "${YELLOW}================================================================${NC}"
+  		echo -e "${NC}"
+  		exit
+  	fi
+  fi
   if [[ -f "/usr/lib/multitoolbox/nodeanalizerandfixer.sh" ]]; then
    bash -i "/usr/lib/multitoolbox/nodeanalizerandfixer.sh"
   else
