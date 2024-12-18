@@ -551,7 +551,7 @@ if [[ -n $FLUXOS_VERSION ]]; then
   if sudo systemctl list-units | grep 'flux-watchdog' | egrep -wi 'running' > /dev/null 2>&1; then
     echo -e "${CHECK_MARK} ${CYAN} Flux-watchdog service running ${SEA}$fluxwatchdog_running${NC}"
   else
-    if [[ "$daemon_inactive" != "" ]]; then
+    if [[ "$fluxwatchdog_inactive" != "" ]]; then
             echo -e "${X_MARK} ${CYAN} Flux-watchdog service not running ${RED}$fluxwatchdog_inactive${NC}"
     else
             echo -e "${X_MARK} ${CYAN} Flux-watchdog service is not installed${NC}"
