@@ -543,7 +543,7 @@ if [[ -n $FLUXOS_VERSION ]]; then
   if sudo systemctl list-units | grep fluxos | egrep -wi 'running' > /dev/null 2>&1; then
           echo -e "${CHECK_MARK} ${CYAN} FluxOS service running ${SEA}$fluxos_running${NC}"
   else
-    if [[ "$daemon_inactive" != "" ]]; then
+    if [[ "$fluxos_inactive" != "" ]]; then
             echo -e "${X_MARK} ${CYAN} FluxOS service not running ${RED}$fluxos_inactive${NC}"
     else
             echo -e "${X_MARK} ${CYAN} FluxOS service is not installed${NC}"
