@@ -131,7 +131,7 @@ if [[ -n $FLUXOS_VERSION ]]; then
           echo -e "${PIN} ${CYAN}FluxAPI PORT: ${ORANGE}$FluxAPI ${NC}"
           echo -e "${PIN} ${CYAN}FluxUI PORT: ${ORANGE}$FluxUI ${NC}"
       
-          error_check=$(sudo journalctl -u fluxos.service -b -n 25 | grep "UPnP failed")
+          error_check=$(sudo journalctl -u fluxos.service -b -n 25 | grep "Deactivated successfully")
           if [[ "$error_check" != "" ]]; then
                   echo -e ""
                   echo -e "${ARROW} ${YELLOW}Checking FluxOS logs... ${NC}"
