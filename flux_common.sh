@@ -447,7 +447,7 @@ function fluxosConfigBackup(){
     if [[ -n $FLUXOS_VERSION ]]; then
       SUDO_CMD="sudo"
     fi
-    $SUDO_CMD cp -nf $ConfigFile $DATA_PATH/userconfig.js.backup
+    $SUDO_CMD cp -nf $ConfigFile $DATA_PATH/userconfig.js.backup > /dev/null 2>&1
     if [[ -f $DATA_PATH/userconfig.js.backup ]]; then
       padding "${ARROW}${GREEN} [FluxOS] ${CYAN}FluxOs userconfig.js backup successfully${NC}" "${CHECK_MARK}"
     else
@@ -465,7 +465,7 @@ function fluxosConfigRestore(){
       if [[ -n $FLUXOS_VERSION ]]; then
         SUDO_CMD="sudo"
       fi
-      $SUDO_CMD cp -nf $DATA_PATH/userconfig.js.backup $ConfigFile
+      $SUDO_CMD cp -nf $DATA_PATH/userconfig.js.backup $ConfigFile > /dev/null 2>&1
       if [[ -f $ConfigFile ]]; then
         padding "${ARROW}${GREEN} [FluxOS] ${CYAN}FluxOs userconfig.js restored successfully${NC}" "${CHECK_MARK}"
       else
