@@ -1752,7 +1752,7 @@ function fluxos_reconfiguration {
  fi
  CHOICE=$(
  whiptail --title "FluxOS Configuration" --menu "Make your choice" 15 40 6 \
- "1)" "Replace ZELID"   \
+ "1)" "Replace Flux/SSP ID"   \
  "2)" "Enable/Disable thunder mode" \
  "3)" "Enable/Disable development mode" \
  "4)" "Blocked Ports Management" \
