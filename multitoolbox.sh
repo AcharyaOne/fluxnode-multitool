@@ -905,6 +905,11 @@ if [[ $(cat /etc/bash.bashrc | grep 'multitoolbox' | wc -l) == "0"  && $FLUXOS_V
 	source /etc/bash.bashrc
 fi
 
+cd /usr/lib/multitoolbox
+commit_hash=$(git rev-parse --short HEAD)
+commit_date=$(git log -1 --date=format:'%Y-%m-%d %H:%M:%S' --format=%cd)
+cd
+
 if ! wget --version > /dev/null 2>&1 ; then
 	sudo apt install -y wget > /dev/null 2>&1 && sleep 2
 fi
@@ -913,7 +918,8 @@ sleep 1
 echo -e "${BLUE}"
 figlet -f slant "Multitoolbox"
 echo -e "${YELLOW}================================================================${NC}"
-echo -e "${GREEN}Version: $dversion${NC}"
+echo -e "${GREEN}Commit: $commit_hash${NC}"
+echo -e "${GREEN}Data: $commit_date${NC}"
 echo -e "${GREEN}Branch: $ROOT_BRANCH${NC}"
 if [[ ! -z $FLUXOS_VERSION ]]; then
   echo -e "${GREEN}FluxOS version: $FLUXOS_VERSION${NC}"
