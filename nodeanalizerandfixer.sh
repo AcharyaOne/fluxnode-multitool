@@ -521,6 +521,7 @@ if [[ -n $FLUXOS_VERSION ]]; then
 
 
    if [ -f $FLUX_BENCH_PATH/debug.log ]; then
+          echo -e ""
           echo -e "${BOOK} ${YELLOW}Checking Flux benchmark $FLUX_BENCH_PATH/debug.log${NC}"
           if [[ $(sudo egrep -ac -wi --color 'Failed' $FLUX_BENCH_PATH/debug.log) != "0" ]]; then
                   echo -e "${YELLOW}${WORNING} ${CYAN}Found: ${RED}$(sudo egrep -ac --color 'Failed' $FLUX_BENCH_PATH/debug.log)${CYAN} error events${NC}"
