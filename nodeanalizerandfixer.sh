@@ -199,6 +199,11 @@ if [[ -n $FLUXOS_VERSION ]]; then
   fi
   echo -e "${NC}"
 
+  if [[ -f /var/log/sas-error.log ]]; then
+    Flux System Attestation Service (SAS)
+    exit
+  fi
+
   
   if [[ "$($BENCH_CLI  getinfo 2>/dev/null  | jq -r '.version' 2>/dev/null)" != "" ]]; then
           echo -e "${BOOK} ${YELLOW}Flux benchmark status:${NC}"
@@ -445,7 +450,8 @@ if [[ -n $FLUXOS_VERSION ]]; then
   fluxos_running=$(sudo systemctl status fluxos 2> /dev/null | grep 'running' | grep -o 'since.*')
   fluxos_inactive=$(sudo systemctl status fluxos 2> /dev/null | egrep 'inactive|failed' | grep -o 'since.*')
   fluxwatchdog_running=$(sudo systemctl status flux-watchdog 2> /dev/null | grep 'running' | grep -o 'since.*')
-  fluxwatchdog_inactive=$(sudo systemctl status flux-watchdog 2> /dev/null | egrep 'inactive|failed' | grep -o 'since.*')
+  fluxwatchdog_inactive=$(sudo systemctl status flux-watchdog 2> /dev/null | egrep 'inactive|failed')
+  fluxwatchdog_awaiting=$(sudo systemctl status flux-watchdog 2> /dev/null | egrep 'inactive')
   syncthing_running=$(sudo systemctl status syncthing 2> /dev/null | grep 'running' | grep -o 'since.*')
   syncthing_inactive=$(sudo systemctl status syncthingg 2> /dev/null | egrep 'inactive|failed' | grep -o 'since.*')
   
@@ -504,8 +510,12 @@ if [[ -n $FLUXOS_VERSION ]]; then
   if sudo systemctl list-units | grep 'flux-watchdog' | egrep -wi 'running' > /dev/null 2>&1; then
     echo -e "${CHECK_MARK} ${CYAN} Flux-watchdog service running ${SEA}$fluxwatchdog_running${NC}"
   else
-    if [[ "$fluxwatchdog_inactive" != "" ]]; then
-            echo -e "${X_MARK} ${CYAN} Flux-watchdog service not running ${RED}$fluxwatchdog_inactive${NC}"
+    if [[ "$fluxwatchdog_inactive" != "" || "$fluxwatchdog_awaiting" != "" ]]; then
+            if [[ -n $fluxwatchdog_inactive ]]; then
+              echo -e "${X_MARK} ${CYAN} Flux-watchdog service not running ${RED}$fluxwatchdog_inactive${NC}"
+            else
+              echo -e "${X_MARK} ${CYAN} Flux-watchdog service awaiting...${NC}"
+            fi
     else
             echo -e "${X_MARK} ${CYAN} Flux-watchdog service is not installed${NC}"
     fi
