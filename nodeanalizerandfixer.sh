@@ -130,15 +130,15 @@ if [[ -n $FLUXOS_VERSION ]]; then
           fi
           echo -e "${PIN} ${CYAN}FluxAPI PORT: ${ORANGE}$FluxAPI ${NC}"
           echo -e "${PIN} ${CYAN}FluxUI PORT: ${ORANGE}$FluxUI ${NC}"
-          if [[ -f /home/$USER/.pm2/logs/flux-out.log ]]; then
-          error_check=$(sudo journalctl -u fluxos.service -b -n 20 | grep "UPnP failed")
-                  if [[ "$error_check" != "" ]]; then
-                          echo -e ""
-                          echo -e "${ARROW} ${YELLOW}Checking FluxOS logs... ${NC}"
-                          echo -e "${WORNING} ${RED}Problem with UPnP detected, FluxOS Shutting down..."
-                          echo -e ""
-                  fi
+      
+          error_check=$(sudo journalctl -u fluxos.service -b -n 25 | grep "UPnP failed")
+          if [[ "$error_check" != "" ]]; then
+                  echo -e ""
+                  echo -e "${ARROW} ${YELLOW}Checking FluxOS logs... ${NC}"
+                  echo -e "${WORNING} ${RED}Problem with UPnP detected, FluxOS Shutting down..."
+                  echo -e ""
           fi
+          
   }
   function get_last_benchmark(){
           if [[ "$2" == "check" ]]; then
