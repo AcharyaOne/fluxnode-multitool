@@ -135,7 +135,7 @@ function install_flux() {
     echo -e "${ARROW} ${CYAN}Import settings...${NC}"
     ZELID=$(grep -w zelid $FLUXOS_PATH/config/userconfig.js | sed -e 's/.*zelid: .//' | sed -e 's/.\{2\}$//')
     WANIP=$(grep -w ipaddress $FLUXOS_PATH/config/userconfig.js | sed -e 's/.*ipaddress: .//' | sed -e 's/.\{2\}$//')
-    echo -e "${PIN}${CYAN}Zel ID = ${GREEN}$ZELID${NC}"
+    echo -e "${PIN}${CYAN}Flux/SSP ID = ${GREEN}$ZELID${NC}"
     KDA_A=$(grep -w kadena $FLUXOS_PATH/config/userconfig.js | sed -e 's/.*kadena: .//' | sed -e 's/.\{2\}$//')
     if [[ "$KDA_A" != "" ]]; then
       echo -e "${PIN}${CYAN}Kadena address = ${GREEN}$KDA_A${NC}"
