@@ -907,8 +907,8 @@ fi
 
 if [[ -d /usr/lib/multitoolbox ]]; then
   cd /usr/lib/multitoolbox
-  commit_hash=$(git rev-parse --short HEAD)
-  commit_date=$(git log -1 --date=format:'%Y-%m-%d %H:%M:%S' --format=%cd)
+  commit_hash=$(sudo git rev-parse --short HEAD)
+  commit_date=$(sudo git log -1 --date=format:'%Y-%m-%d %H:%M:%S' --format=%cd)
   cd
 fi
 
