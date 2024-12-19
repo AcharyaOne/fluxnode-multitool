@@ -721,7 +721,7 @@ function config_smart_create() {
     echo -e "${ARROW} ${YELLOW}Imported fluxOS settings:${NC}"
     ZELID=$(grep -w zelid $FLUXOS_PATH/config/userconfig.js | sed -e 's/.*zelid: .//' | sed -e 's/.\{2\}$//')
     if [[ "$ZELID" != "" ]]; then
-      echo -e "${PIN}${CYAN} Zel ID = ${GREEN}$ZELID${NC}"
+      echo -e "${PIN}${CYAN} Flux/SSP ID = ${GREEN}$ZELID${NC}"
       smart_install_conf "zelid" "$ZELID" "$1"
     fi
     KDA_A=$(grep -w kadena $FLUXOS_PATH/config/userconfig.js | sed -e 's/.*kadena: .//' | sed -e 's/.\{2\}$//')
