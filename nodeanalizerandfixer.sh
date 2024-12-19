@@ -282,21 +282,21 @@ if [[ -n $FLUXOS_VERSION ]]; then
                                   fi
                           fi
                   fi
-                  device_name=$(ip addr | grep 'BROADCAST,MULTICAST,UP,LOWER_UP' | head -n1 | awk '{print $2}' | sed 's/://' | sed 's/@/ /' | awk '{print $1}')
-                  local_device_ip=$(ip a list $device_name | grep -o $WANIP )
-                  if [[ "$WANIP" != "" ]]; then
-                          if [[ "$local_device_ip" == "$WANIP" ]]; then
-                                  echo -e "${CHECK_MARK} ${CYAN} Public IP(${GREEN}$WANIP${CYAN}) matches local device(${GREEN}$device_name${CYAN}) IP(${GREEN}$local_device_ip${CYAN})${NC}"
-                          else
-                                  echo -e "${X_MARK} ${CYAN} Public IP(${GREEN}$WANIP${CYAN}) not matches local device(${GREEN}$device_name${CYAN}) IP${NC}"
-                                  echo -e "${ARROW} ${CYAN} If you under NAT use option 10 from multitoolbox (self-hosting)${NC}"
+                  #device_name=$(ip addr | grep 'BROADCAST,MULTICAST,UP,LOWER_UP' | head -n1 | awk '{print $2}' | sed 's/://' | sed 's/@/ /' | awk '{print $1}')
+                  #local_device_ip=$(ip a list $device_name | grep -o $WANIP )
+                  #if [[ "$WANIP" != "" ]]; then
+                          #if [[ "$local_device_ip" == "$WANIP" ]]; then
+                                  #echo -e "${CHECK_MARK} ${CYAN} Public IP(${GREEN}$WANIP${CYAN}) matches local device(${GREEN}$device_name${CYAN}) IP(${GREEN}$local_device_ip${CYAN})${NC}"
+                          #else
+                                  #echo -e "${X_MARK} ${CYAN} Public IP(${GREEN}$WANIP${CYAN}) not matches local device(${GREEN}$device_name${CYAN}) IP${NC}"
+                                  #echo -e "${ARROW} ${CYAN} If you under NAT use option 10 from multitoolbox (self-hosting)${NC}"
                                   ## dev_name=$(ip addr | grep 'BROADCAST,MULTICAST,UP,LOWER_UP' | head -n1 | awk '{print $2"0"}')
                                   ## sudo ip addr add "$WANPI" dev "$dev_name"
                                   # IP_FIX="1"
-                          fi
-                  else
-                          echo -e "${ARROW} ${CYAN} Local device(${GREEN}$device_name${CYAN}) IP veryfication failed...${NC}"
-                  fi
+                          #fi
+                  #else
+                          #echo -e "${ARROW} ${CYAN} Local device(${GREEN}$device_name${CYAN}) IP veryfication failed...${NC}"
+                  #fi
           fi
           echo -e "${NC}"
   fi
