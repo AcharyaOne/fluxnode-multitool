@@ -160,7 +160,7 @@ function install_flux() {
     echo -e ""
     echo -e "${ARROW} ${CYAN}Removing any instances of FluxOS....${NC}"
     sudo rm -rf $FLUXOS_PATH  > /dev/null 2>&1 && sleep 1
-    if [[ "$ZELID" != "" && "$WANIP" != "" && "$KDA_A" != "" ]]; then
+    if [[ "$ZELID" != "" && "$WANIP" != "" ]]; then
       zelflux_setting_import="1"
     fi
   fi
