@@ -444,7 +444,10 @@ function blocked_repositories(){
 function fluxosConfigBackup(){
   ConfigFile="$FLUXOS_PATH/config/userconfig.js"
   if [[ -f $ConfigFile ]]; then
-    cp -nf $ConfigFile $DATA_PATH/userconfig.js.backup
+    if [[ -n $FLUXOS_VERSION ]]; then
+      SUDO_CMD="sudo"
+    fi
+    $SUDO_CMD cp -nf $ConfigFile $DATA_PATH/userconfig.js.backup
     if [[ -f $DATA_PATH/userconfig.js.backup ]]; then
       padding "${ARROW}${GREEN} [FluxOS] ${CYAN}FluxOs userconfig.js backup successfully${NC}" "${CHECK_MARK}"
     else
@@ -459,7 +462,10 @@ function fluxosConfigRestore(){
   ConfigFile="$FLUXOS_PATH/config/userconfig.js"
   if [[ -d $FLUXOS_PATH ]]; then
     if [[ -f $DATA_PATH/userconfig.js.backup ]]; then 
-      cp -nf $DATA_PATH/userconfig.js.backup $ConfigFile
+      if [[ -n $FLUXOS_VERSION ]]; then
+        SUDO_CMD="sudo"
+      fi
+      $SUDO_CMD cp -nf $DATA_PATH/userconfig.js.backup $ConfigFile
       if [[ -f $ConfigFile ]]; then
         padding "${ARROW}${GREEN} [FluxOS] ${CYAN}FluxOs userconfig.js restored successfully${NC}" "${CHECK_MARK}"
       else
@@ -1730,13 +1736,15 @@ function development_mode(){
 function fluxos_reconfiguration {
  echo -e "${GREEN}Module: FluxOS reconfiguration${NC}"
  echo -e "${YELLOW}================================================================${NC}"
- if [[ "$USER" == "root" || "$USER" == "ubuntu" || "$USER" == "admin" ]]; then
-		echo -e "${CYAN}You are currently logged in as ${GREEN}$USER${NC}"
-		echo -e "${CYAN}Please switch to the user account.${NC}"
-		echo -e "${YELLOW}================================================================${NC}"
-		echo -e "${NC}"
-		exit
- fi
+ if [[ -z $FLUXOS_VERSION ]]; then
+   if [[ "$USER" == "root" || "$USER" == "ubuntu" || "$USER" == "admin" ]]; then
+  		echo -e "${CYAN}You are currently logged in as ${GREEN}$USER${NC}"
+  		echo -e "${CYAN}Please switch to the user account.${NC}"
+  		echo -e "${YELLOW}================================================================${NC}"
+  		echo -e "${NC}"
+  		exit
+   fi
+ fi  
  if ! [[ -f $FLUXOS_PATH/config/userconfig.js ]]; then
 	 echo -e "${WORNING} ${CYAN}FluxOS userconfig.js not exist, operation aborted${NC}"
 	 echo -e ""
@@ -1745,37 +1753,33 @@ function fluxos_reconfiguration {
  CHOICE=$(
  whiptail --title "FluxOS Configuration" --menu "Make your choice" 15 40 6 \
  "1)" "Replace ZELID"   \
- "2)" "Add/Replace kadena address" \
- "3)" "Enable/Disable thunder mode" \
- "4)" "Enable/Disable development mode" \
- "5)" "Blocked Ports Management" \
- "6)" "Blocked Repositories Management" \
- "7)" "FluxOS config backup" \
- "8)" "FluxOS config restore" 3>&2 2>&1 1>&3
+ "2)" "Enable/Disable thunder mode" \
+ "3)" "Enable/Disable development mode" \
+ "4)" "Blocked Ports Management" \
+ "5)" "Blocked Repositories Management" \
+ "6)" "FluxOS config backup" \
+ "7)" "FluxOS config restore" 3>&2 2>&1 1>&3
 	)
 		case $CHOICE in
 		"1)")
 		replace_zelid
 		;;
 		"2)")
-		replace_kadena
-		;;
-		"3)")
 		thunder_mode
 		;;
-	  "4)")
+	  "3)")
 		development_mode
 		;;
-	  "5)")
+	  "4)")
 		blocked_ports
 		;;
-    "6)")
+    "5)")
 		blocked_repositories
 		;;
-  	"7)")
+  	"6)")
 		fluxosConfigBackup
 		;;	
-  	"8)")
+  	"7)")
 		fluxosConfigRestore
 		;;	
 	esac
