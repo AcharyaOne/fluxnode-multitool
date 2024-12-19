@@ -201,7 +201,8 @@ if [[ -n $FLUXOS_VERSION ]]; then
 
   if [[ -f /var/log/sas-error.log ]]; then
     error_last_line=$(sudo cat /var/log/sas-error.log | tail -n1)
-    echo -e "${X_MARK} ${CYAN}Flux System Attestation Service (SAS) /var/log/sas-error.log detected!${NC}"
+    echo -e "${WORNING} ${CYAN}Flux System Attestation Service (SAS) error detected!${NC}"
+    echo -e "${PIN} ${CYAN}Log file: /var/log/sas-error.log${NC}"
     echo -e "${PIN} ${CYAN}Last error line: $error_last_line${NC}"
     echo -e ""
     exit
