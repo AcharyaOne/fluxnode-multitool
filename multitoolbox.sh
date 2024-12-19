@@ -37,7 +37,7 @@ fi
 FLUX_DIR='zelflux'
 FLUX_APPS_DIR='ZelApps'
 COIN_NAME='zelcash'
-dversion="v7.8"
+dversion="v8.0"
 PM2_INSTALL="0"
 zelflux_setting_import="0"
 OS_FLAGE="$2"
@@ -905,10 +905,12 @@ if [[ $(cat /etc/bash.bashrc | grep 'multitoolbox' | wc -l) == "0"  && $FLUXOS_V
 	source /etc/bash.bashrc
 fi
 
-cd /usr/lib/multitoolbox
-commit_hash=$(git rev-parse --short HEAD)
-commit_date=$(git log -1 --date=format:'%Y-%m-%d %H:%M:%S' --format=%cd)
-cd
+if [[ -d /usr/lib/multitoolbox ]]; then
+  cd /usr/lib/multitoolbox
+  commit_hash=$(git rev-parse --short HEAD)
+  commit_date=$(git log -1 --date=format:'%Y-%m-%d %H:%M:%S' --format=%cd)
+  cd
+fi
 
 if ! wget --version > /dev/null 2>&1 ; then
 	sudo apt install -y wget > /dev/null 2>&1 && sleep 2
@@ -918,8 +920,11 @@ sleep 1
 echo -e "${BLUE}"
 figlet -f slant "Multitoolbox"
 echo -e "${YELLOW}================================================================${NC}"
-echo -e "${GREEN}Commit: $commit_hash${NC}"
-echo -e "${GREEN}Data: $commit_date${NC}"
+if [[ -n $FLUXOS_VERSION ]]; then
+  echo -e "${GREEN}Version: $dversion${NC}"
+  echo -e "${GREEN}Commit: $commit_hash${NC}"
+  echo -e "${GREEN}Data: $commit_date${NC}"
+fi
 echo -e "${GREEN}Branch: $ROOT_BRANCH${NC}"
 if [[ ! -z $FLUXOS_VERSION ]]; then
   echo -e "${GREEN}FluxOS version: $FLUXOS_VERSION${NC}"
