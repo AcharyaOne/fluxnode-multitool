@@ -136,10 +136,10 @@ function install_flux() {
     ZELID=$(grep -w zelid $FLUXOS_PATH/config/userconfig.js | sed -e 's/.*zelid: .//' | sed -e 's/.\{2\}$//')
     WANIP=$(grep -w ipaddress $FLUXOS_PATH/config/userconfig.js | sed -e 's/.*ipaddress: .//' | sed -e 's/.\{2\}$//')
     echo -e "${PIN}${CYAN}Flux/SSP ID = ${GREEN}$ZELID${NC}"
-    KDA_A=$(grep -w kadena $FLUXOS_PATH/config/userconfig.js | sed -e 's/.*kadena: .//' | sed -e 's/.\{2\}$//')
-    if [[ "$KDA_A" != "" ]]; then
-      echo -e "${PIN}${CYAN}Kadena address = ${GREEN}$KDA_A${NC}"
-    fi
+    #KDA_A=$(grep -w kadena $FLUXOS_PATH/config/userconfig.js | sed -e 's/.*kadena: .//' | sed -e 's/.\{2\}$//')
+    #if [[ "$KDA_A" != "" ]]; then
+      #echo -e "${PIN}${CYAN}Kadena address = ${GREEN}$KDA_A${NC}"
+    #fi
     echo -e "${PIN}${CYAN}IP = ${GREEN}$WANIP${NC}"  
     upnp_port=$(grep -w apiport $FLUXOS_PATH/config/userconfig.js | egrep -o '[0-9]+')
     if [[ "$upnp_port" != "" ]]; then
@@ -198,30 +198,30 @@ function install_flux() {
     get_ip "install"
     while true
     do
-      ZELID="$(whiptail --title "MULTITOOLBOX" --inputbox "Enter your Flux/SSP ID from ZelCore (Apps -> Zel ID (CLICK QR CODE)) " 8 72 3>&1 1>&2 2>&3)"
+      ZELID="$(whiptail --title "MULTITOOLBOX" --inputbox "Enter your Flux/SSP ID from ZelCore (Apps -> Flux ID (CLICK QR CODE)) " 8 72 3>&1 1>&2 2>&3)"
       if [ $(printf "%s" "$ZELID" | wc -c) -eq "34" ] || [ $(printf "%s" "$ZELID" | wc -c) -eq "33" ] || [ $(grep -Eo "^0x[a-fA-F0-9]{40}$" <<< "$ZELID") ]; then
-        string_limit_check_mark "Zel ID is valid..........................................."
+        string_limit_check_mark "Flux/SSP ID is valid..........................................."
         break
       else
-        string_limit_x_mark "Zel ID is not valid try again..........................................."
+        string_limit_x_mark "Flux/SSP ID is not valid try again..........................................."
         sleep 2
       fi
     done
-    if [[ -z $FLUXOS_VERSION ]]; then
-      while true
-      do
-        KDA_A=$(whiptail --inputbox "Node tier eligible to receive KDA rewards, what's your KDA address? Nothing else will be required on FluxOS regarding KDA." 8 85 3>&1 1>&2 2>&3)
-        if [[ "$KDA_A" != "" && "$KDA_A" != *kadena* && "$KDA_A" = *k:*  ]]; then    
-          echo -e "${ARROW} ${CYAN}Kadena address is valid.................[${CHECK_MARK}${CYAN}]${NC}"	
-          KDA_A="kadena:$KDA_A?chainid=0"			    
-          sleep 2
-          break
-        else	     
-          echo -e "${ARROW} ${CYAN}Kadena address is not valid.............[${X_MARK}${CYAN}]${NC}"
-          sleep 2		     
-        fi
-      done	 
-    fi
+    #if [[ -z $FLUXOS_VERSION ]]; then
+      #while true
+      #do
+        #KDA_A=$(whiptail --inputbox "Node tier eligible to receive KDA rewards, what's your KDA address? Nothing else will be required on FluxOS regarding KDA." 8 85 3>&1 1>&2 2>&3)
+        #if [[ "$KDA_A" != "" && "$KDA_A" != *kadena* && "$KDA_A" = *k:*  ]]; then    
+          #echo -e "${ARROW} ${CYAN}Kadena address is valid.................[${CHECK_MARK}${CYAN}]${NC}"	
+          #KDA_A="kadena:$KDA_A?chainid=0"			    
+          #sleep 2
+          #break
+        #else	     
+          #echo -e "${ARROW} ${CYAN}Kadena address is not valid.............[${X_MARK}${CYAN}]${NC}"
+          #sleep 2		     
+        #fi
+      #done	 
+    #fi
   fi
 	fluxos_conf_create
   if [[ -f $FLUXOS_PATH/config/userconfig.js ]]; then	
