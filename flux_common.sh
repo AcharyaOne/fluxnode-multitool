@@ -439,6 +439,7 @@ function blocked_repositories(){
     buildBlockedRepositoryList "  blockedRepositories" "$string" "Blocked repositories list cleared successful!" "fluxos"
   ;;
   esac
+  echo -e ""
 }
 
 function fluxosConfigBackup(){
@@ -456,6 +457,7 @@ function fluxosConfigBackup(){
   else
     padding "${ARROW}${GREEN} [FluxOS] ${CYAN}FluxOs userconfig.js file not exists${NC}" "${X_MARK}"
   fi
+  echo -e ""
 }
 
 function fluxosConfigRestore(){
@@ -477,6 +479,7 @@ function fluxosConfigRestore(){
   else
     padding "${ARROW}${GREEN} [FluxOS] ${CYAN}FluxOs not installed${NC}" "${X_MARK}"
   fi
+  echo -e ""
 }
 
 function config_builder() {
