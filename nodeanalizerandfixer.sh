@@ -607,7 +607,7 @@ if [[ -n $FLUXOS_VERSION ]]; then
   
                   if [[ -f $FLUXOS_PATH/error.log ]]; then
                           echo -e ""
-                          echo -e "${BOOK} ${YELLOW}FluxOS error.log file detected, check ~/error.log"
+                          echo -e "${BOOK} ${YELLOW}FluxOS error.log file detected, check $FLUXOS_PATH/error.log"
                           echo -e "${YELLOW}${WORNING} ${CYAN}Found: ${RED}$(wc -l  < $FLUXOS_PATH/error.log)${CYAN} error events${NC}"
                           error_line=$(cat $FLUXOS_PATH/error.log | grep 'Error' | tail -1 | sed 's/[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}.[0-9]\{2\}.[0-9]\{2\}.[0-9]\{2\}.[0-9]\{3\}Z//' | xargs)
                           echo -e "${PIN} ${CYAN}Last error line: $error_line${NC}"
@@ -667,7 +667,7 @@ if [[ -n $FLUXOS_VERSION ]]; then
   fi
   if [[ -f $FLUX_WATCHDOG_PATH/watchdog_error.log ]]; then
           echo -e ""
-          echo -e "${BOOK} ${YELLOW}Watchdog watchdog_error.log file detected, check ~/watchdog/watchdog_error.log"
+          echo -e "${BOOK} ${YELLOW}Watchdog watchdog_error.log file detected, check $FLUX_WATCHDOG_PATH/watchdog_error.log"
           echo -e "${YELLOW}${WORNING} ${CYAN}Found: ${RED}$(wc -l  < $FLUX_WATCHDOG_PATH/watchdog_error.log)${CYAN} error events${NC}"
           error_line=$(cat $FLUX_WATCHDOG_PATH/watchdog_error.log | tail -1 | sed 's/[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}.[0-9]\{2\}.[0-9]\{2\}.[0-9]\{2\}.//')
           echo -e "${PIN} ${CYAN}Last error line: $error_line${NC}"
