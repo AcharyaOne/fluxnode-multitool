@@ -2701,7 +2701,7 @@ function upnp_enable() {
 		sleep 150
 		echo -e "${ARROW}${CYAN} Checking FluxOS logs... ${NC}"
     if [[ -n $FLUXOS_VERSION ]]; then
-		  error_check=$(sudo journalctl -u fluxos.service -b -n 25 | grep "UPnP failed")
+		  error_check=$(sudo journalctl -u fluxos.service -b -n 25 | grep "Deactivated successfully")
     else
       error_check=$(tail -n10 /home/$USER/.pm2/logs/flux-out.log | grep "UPnP failed")
     fi
