@@ -198,66 +198,7 @@ if [[ -n $FLUXOS_VERSION ]]; then
           sudo apt install -y bc > /dev/null 2>&1 && sleep 1
   fi
   echo -e "${NC}"
-  if [ -f $FLUX_BENCH_PATH/debug.log ]; then
-          echo -e "${BOOK} ${YELLOW}Checking Flux benchmark $FLUX_BENCH_PATH/debug.log${NC}"
-          if [[ $(sudo egrep -ac -wi --color 'Failed' $FLUX_BENCH_PATH/debug.log) != "0" ]]; then
-                  echo -e "${YELLOW}${WORNING} ${CYAN}Found: ${RED}$(sudo egrep -ac --color 'Failed' $FLUX_BENCH_PATH/debug.log)${CYAN} error events${NC}"
-                  #egrep -wi --color 'warning|error|critical|failed' ~/.zelbenchmark/debug.log
-                  error_line=$(sudo egrep -a --color 'Failed' $FLUX_BENCH_PATH/debug.log | tail -1 | sed 's/[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}.[0-9]\{2\}.[0-9]\{2\}.[0-9]\{2\}.//')
-                  event_date=$(sudo egrep -a --color 'Failed' $FLUX_BENCH_PATH/debug.log | tail -1 | grep -o '[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}.[0-9]\{2\}.[0-9]\{2\}.[0-9]\{2\}')
-                  echo -e "${PIN} ${CYAN}Last error line: $error_line${NC}"
-                  event_time_uxtime=$(date -ud "$event_date" +"%s")
-                  event_human_time_local=$(date -d @"$event_time_uxtime" +'%Y-%m-%d %H:%M:%S [%z]')
-                  event_human_time_utc=$(TZ=GMT date -d @"$event_time_uxtime" +'%Y-%m-%d %H:%M:%S [%z]')
-                  echo -e "${PIN} ${CYAN}Last error time: ${SEA}$event_human_time_local${NC} / ${GREEN}$event_human_time_utc${NC}"
-                  event_time="$event_time_uxtime"
-                  now_date=$(date +%s)
-                  tdiff=$((now_date-event_time))
-                  show_time "$tdiff"
-                  echo -e "${PIN} ${CYAN}Creating Flux benchmark_debug_error.log${NC}"
-                  sudo egrep -a --color 'Failed' $FLUX_BENCH_PATH/debug.log > /tmp/benchmark_debug_error.log
-                  echo -e ""
-          else
-                  echo -e "${GREEN}\xF0\x9F\x94\x8A ${CYAN}Found: ${GREEN}0 errors${NC}"
-                  echo -e ""
-          fi
-          skipp_debug=0
-          get_last_benchmark "HDD" "check"
-          if [[ "$skipp_debug" == "0" ]]; then
-                  echo -e "${BOOK} ${YELLOW}Last benchmark from $FLUX_BENCH_PATH/debug.log${NC}"
-                  get_last_benchmark "HDD"
-                  get_last_benchmark "DD_WRITE"
-                  get_last_benchmark "ram"
-                  get_last_benchmark "cores"
-                  echo -e ""
-          fi
-  fi
-  if [ -f $FLUX_DAEMON_PATH/debug.log ]; then
-          echo -e "${BOOK} ${YELLOW}Checking Flux daemon $FLUX_DAEMON_PATH/debug.log${NC}"
-          if [[ $(sudo egrep -ac -wi --color 'error|failed' $FLUX_DAEMON_PATH/debug.log) != "0" ]]; then
-                  echo -e "${YELLOW}${WORNING} ${CYAN}Found: ${RED}$(sudo egrep -ac -wi --color 'error|failed' $FLUX_DAEMON_PATH/debug.log)${CYAN} error events, ${RED}$(sudo egrep -ac -wi --color 'benchmarking' $FLUX_DAEMON_PATH/debug.log) ${CYAN}related to benchmark${NC}"
-                  if [[ $(sudo egrep -ac -wi --color 'benchmarking' $FLUX_DAEMON_PATH/debug.log) != "0" ]]; then
-                          echo -e "${BOOK} ${CYAN}FluxBench errors info:${NC}"
-                          error_line=$(sudo egrep -a --color 'benchmarking' $FLUX_DAEMON_PATH/debug.log | tail -1 | sed 's/[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}.[0-9]\{2\}.[0-9]\{2\}.[0-9]\{2\}.//')
-                          event_date=$(sudo egrep -a --color 'benchmarking' $FLUX_DAEMON_PATH/debug.log | tail -1 | grep -o '[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}.[0-9]\{2\}.[0-9]\{2\}.[0-9]\{2\}')
-                          echo -e "${PIN} ${CYAN}Last error line: $error_line${NC}"
-                          event_time_uxtime=$(date -ud "$event_date" +"%s")
-                          event_human_time_local=$(date -d @"$event_time_uxtime" +'%Y-%m-%d %H:%M:%S [%z]')
-                          event_human_time_utc=$(TZ=GMT date -d @"$event_time_uxtime" +'%Y-%m-%d %H:%M:%S [%z]')
-                          echo -e "${PIN} ${CYAN}Last error time: ${SEA}$event_human_time_local${NC} / ${GREEN}$event_human_time_utc${NC}"
-                          event_time="$event_time_uxtime"
-                          now_date=$(date +%s)
-                          tdiff=$((now_date-event_time))
-                          show_time "$tdiff"
-                  fi
-                  echo -e "${PIN} ${CYAN}Creating flux_daemon_debug_error.log${NC}"
-                  sudo egrep -a --color 'error|failed' $FLUX_DAEMON_PATH/debug.log > /tmp/flux_daemon_debug_error.log
-                  echo -e ""
-          else
-                  echo -e "${GREEN}\xF0\x9F\x94\x8A ${CYAN}Found: ${GREEN}0 errors${NC}"
-                  echo -e ""
-          fi
-  fi
+
   
   if [[ "$($BENCH_CLI  getinfo 2>/dev/null  | jq -r '.version' 2>/dev/null)" != "" ]]; then
           echo -e "${BOOK} ${YELLOW}Flux benchmark status:${NC}"
@@ -577,6 +518,70 @@ if [[ -n $FLUXOS_VERSION ]]; then
   else
           echo -e "${X_MARK} ${CYAN} FluxOS front is not working${NC}"
   fi
+
+
+   if [ -f $FLUX_BENCH_PATH/debug.log ]; then
+          echo -e "${BOOK} ${YELLOW}Checking Flux benchmark $FLUX_BENCH_PATH/debug.log${NC}"
+          if [[ $(sudo egrep -ac -wi --color 'Failed' $FLUX_BENCH_PATH/debug.log) != "0" ]]; then
+                  echo -e "${YELLOW}${WORNING} ${CYAN}Found: ${RED}$(sudo egrep -ac --color 'Failed' $FLUX_BENCH_PATH/debug.log)${CYAN} error events${NC}"
+                  #egrep -wi --color 'warning|error|critical|failed' ~/.zelbenchmark/debug.log
+                  error_line=$(sudo egrep -a --color 'Failed' $FLUX_BENCH_PATH/debug.log | tail -1 | sed 's/[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}.[0-9]\{2\}.[0-9]\{2\}.[0-9]\{2\}.//')
+                  event_date=$(sudo egrep -a --color 'Failed' $FLUX_BENCH_PATH/debug.log | tail -1 | grep -o '[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}.[0-9]\{2\}.[0-9]\{2\}.[0-9]\{2\}')
+                  echo -e "${PIN} ${CYAN}Last error line: $error_line${NC}"
+                  event_time_uxtime=$(date -ud "$event_date" +"%s")
+                  event_human_time_local=$(date -d @"$event_time_uxtime" +'%Y-%m-%d %H:%M:%S [%z]')
+                  event_human_time_utc=$(TZ=GMT date -d @"$event_time_uxtime" +'%Y-%m-%d %H:%M:%S [%z]')
+                  echo -e "${PIN} ${CYAN}Last error time: ${SEA}$event_human_time_local${NC} / ${GREEN}$event_human_time_utc${NC}"
+                  event_time="$event_time_uxtime"
+                  now_date=$(date +%s)
+                  tdiff=$((now_date-event_time))
+                  show_time "$tdiff"
+                  echo -e "${PIN} ${CYAN}Creating Flux benchmark_debug_error.log${NC}"
+                  sudo egrep -a --color 'Failed' $FLUX_BENCH_PATH/debug.log > /tmp/benchmark_debug_error.log
+                  echo -e ""
+          else
+                  echo -e "${GREEN}\xF0\x9F\x94\x8A ${CYAN}Found: ${GREEN}0 errors${NC}"
+                  echo -e ""
+          fi
+          skipp_debug=0
+          get_last_benchmark "HDD" "check"
+          if [[ "$skipp_debug" == "0" ]]; then
+                  echo -e "${BOOK} ${YELLOW}Last benchmark from $FLUX_BENCH_PATH/debug.log${NC}"
+                  get_last_benchmark "HDD"
+                  get_last_benchmark "DD_WRITE"
+                  get_last_benchmark "ram"
+                  get_last_benchmark "cores"
+                  echo -e ""
+          fi
+  fi
+  if [ -f $FLUX_DAEMON_PATH/debug.log ]; then
+          echo -e ""
+          echo -e "${BOOK} ${YELLOW}Checking Flux daemon $FLUX_DAEMON_PATH/debug.log${NC}"
+          if [[ $(sudo egrep -ac -wi --color 'error|failed' $FLUX_DAEMON_PATH/debug.log) != "0" ]]; then
+                  echo -e "${YELLOW}${WORNING} ${CYAN}Found: ${RED}$(sudo egrep -ac -wi --color 'error|failed' $FLUX_DAEMON_PATH/debug.log)${CYAN} error events, ${RED}$(sudo egrep -ac -wi --color 'benchmarking' $FLUX_DAEMON_PATH/debug.log) ${CYAN}related to benchmark${NC}"
+                  if [[ $(sudo egrep -ac -wi --color 'benchmarking' $FLUX_DAEMON_PATH/debug.log) != "0" ]]; then
+                          echo -e "${BOOK} ${CYAN}FluxBench errors info:${NC}"
+                          error_line=$(sudo egrep -a --color 'benchmarking' $FLUX_DAEMON_PATH/debug.log | tail -1 | sed 's/[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}.[0-9]\{2\}.[0-9]\{2\}.[0-9]\{2\}.//')
+                          event_date=$(sudo egrep -a --color 'benchmarking' $FLUX_DAEMON_PATH/debug.log | tail -1 | grep -o '[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}.[0-9]\{2\}.[0-9]\{2\}.[0-9]\{2\}')
+                          echo -e "${PIN} ${CYAN}Last error line: $error_line${NC}"
+                          event_time_uxtime=$(date -ud "$event_date" +"%s")
+                          event_human_time_local=$(date -d @"$event_time_uxtime" +'%Y-%m-%d %H:%M:%S [%z]')
+                          event_human_time_utc=$(TZ=GMT date -d @"$event_time_uxtime" +'%Y-%m-%d %H:%M:%S [%z]')
+                          echo -e "${PIN} ${CYAN}Last error time: ${SEA}$event_human_time_local${NC} / ${GREEN}$event_human_time_utc${NC}"
+                          event_time="$event_time_uxtime"
+                          now_date=$(date +%s)
+                          tdiff=$((now_date-event_time))
+                          show_time "$tdiff"
+                  fi
+                  echo -e "${PIN} ${CYAN}Creating flux_daemon_debug_error.log${NC}"
+                  sudo egrep -a --color 'error|failed' $FLUX_DAEMON_PATH/debug.log > /tmp/flux_daemon_debug_error.log
+                  echo -e ""
+          else
+                  echo -e "${GREEN}\xF0\x9F\x94\x8A ${CYAN}Found: ${GREEN}0 errors${NC}"
+                  echo -e ""
+          fi
+  fi
+  
   if [[ -d $FLUXOS_PATH ]]; then
           FILE=$FLUXOS_PATH/config/userconfig.js
           if [[ -f "$FILE" ]]; then
