@@ -2698,7 +2698,7 @@ function upnp_enable() {
     fi
 		sleep 150
 		echo -e "${ARROW}${CYAN} Checking FluxOS logs... ${NC}"
-		error_check=$(tail -n10 /home/$USER/.pm2/logs/flux-out.log | grep "UPnP failed")
+		error_check=$(sudo journalctl -u fluxos.service -b -n 25 | grep "UPnP failed")
 		if [[ "$error_check" == "" ]]; then
 			echo -e ""
 			LOCAL_IP=$(ip -o route get to 8.8.8.8 | sed -n 's/.*src \([0-9.]\+\).*/\1/p')
