@@ -1901,9 +1901,9 @@ function bootstrap_new() {
 	if [[ -f "$FILE_PATH" ]]; then
 		if [[ "$Mode" != "install" ]]; then
 			start_service
-			if whiptail --yesno "Would you like remove bootstrap archive file?" 8 60; then
+			# if whiptail --yesno "Would you like remove bootstrap archive file?" 8 60; then
 				sudo rm -rf $FILE_PATH > /dev/null 2>&1 && sleep 2
-			fi
+			# fi
 		fi
 		return
 	else
@@ -1911,9 +1911,9 @@ function bootstrap_new() {
 			bootstrap_manual
 			if [[ "$Mode" != "install" && "$server_offline" == "0" ]]; then
 				start_service
-				if whiptail --yesno "Would you like remove bootstrap archive file?" 8 60; then
+				# if whiptail --yesno "Would you like remove bootstrap archive file?" 8 60; then
 				  sudo rm -rf $DATA_PATH/$BOOTSTRAP_FILE > /dev/null 2>&1 && sleep 2
-				fi
+				# fi
 			fi
 			return
 		fi
