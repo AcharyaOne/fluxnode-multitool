@@ -505,6 +505,8 @@ if [[ -n $FLUXOS_VERSION ]]; then
   fluxos_inactive=$(sudo systemctl status fluxos 2> /dev/null | egrep 'inactive|failed' | grep -o 'since.*')
   fluxwatchdog_running=$(sudo systemctl status flux-watchdog 2> /dev/null | grep 'running' | grep -o 'since.*')
   fluxwatchdog_inactive=$(sudo systemctl status flux-watchdog 2> /dev/null | egrep 'inactive|failed' | grep -o 'since.*')
+  syncthing_running=$(sudo systemctl status syncthing 2> /dev/null | grep 'running' | grep -o 'since.*')
+  syncthing_inactive=$(sudo systemctl status syncthingg 2> /dev/null | egrep 'inactive|failed' | grep -o 'since.*')
   
   if sudo systemctl list-units | grep docker.service | egrep -wi 'running' > /dev/null 2>&1; then
     echo -e "${CHECK_MARK}  ${CYAN}Docker service running ${SEA}$docker_running${NC}"
@@ -545,6 +547,16 @@ if [[ -n $FLUXOS_VERSION ]]; then
             echo -e "${X_MARK} ${CYAN} FluxOS service not running ${RED}$fluxos_inactive${NC}"
     else
             echo -e "${X_MARK} ${CYAN} FluxOS service is not installed${NC}"
+    fi
+  fi
+
+  if sudo systemctl list-units | grep syncthing | egrep -wi 'running' > /dev/null 2>&1; then
+          echo -e "${CHECK_MARK} ${CYAN} Syncthing service running ${SEA}$syncthing_running${NC}"
+  else
+    if [[ "$syncthing_inactive" != "" ]]; then
+            echo -e "${X_MARK} ${CYAN} Syncthing service not running ${RED}$syncthing_inactive${NC}"
+    else
+            echo -e "${X_MARK} ${CYAN} Syncthing service is not installed${NC}"
     fi
   fi
   
