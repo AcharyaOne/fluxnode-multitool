@@ -556,7 +556,6 @@ if [[ -n $FLUXOS_VERSION ]]; then
           fi
   fi
   if [ -f $FLUX_DAEMON_PATH/debug.log ]; then
-          echo -e ""
           echo -e "${BOOK} ${YELLOW}Checking Flux daemon $FLUX_DAEMON_PATH/debug.log${NC}"
           if [[ $(sudo egrep -ac -wi --color 'error|failed' $FLUX_DAEMON_PATH/debug.log) != "0" ]]; then
                   echo -e "${YELLOW}${WORNING} ${CYAN}Found: ${RED}$(sudo egrep -ac -wi --color 'error|failed' $FLUX_DAEMON_PATH/debug.log)${CYAN} error events, ${RED}$(sudo egrep -ac -wi --color 'benchmarking' $FLUX_DAEMON_PATH/debug.log) ${CYAN}related to benchmark${NC}"
