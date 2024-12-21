@@ -1533,13 +1533,15 @@ function create_swap() {
 function daemon_reconfiguration(){
 	echo -e "${GREEN}Module: Flux Daemon Reconfiguration${NC}"
 	echo -e "${YELLOW}================================================================${NC}"
-	if [[ "$USER" == "root" || "$USER" == "ubuntu" || "$USER" == "admin" ]]; then
-		echo -e "${CYAN}You are currently logged in as ${GREEN}$USER${NC}"
-		echo -e "${CYAN}Please switch to the user account.${NC}"
-		echo -e "${YELLOW}================================================================${NC}"
-		echo -e "${NC}"
-		exit
-	fi
+  if [[ -z $FLUXOS_VERSION ]]; then
+  	if [[ "$USER" == "root" || "$USER" == "ubuntu" || "$USER" == "admin" ]]; then
+  		echo -e "${CYAN}You are currently logged in as ${GREEN}$USER${NC}"
+  		echo -e "${CYAN}Please switch to the user account.${NC}"
+  		echo -e "${YELLOW}================================================================${NC}"
+  		echo -e "${NC}"
+  		exit
+  	fi
+  fi
 	config_veryfity
 	echo -e ""
 	echo -e "${ARROW} ${YELLOW}Fill in all the fields that you want to replace${NC}"
