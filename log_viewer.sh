@@ -30,6 +30,7 @@ function at_exit() {
 $TMUX -q new-session -d -s "$SESSION" -n Main "printf '\033]2;Main\033\\' ; bash"
 
 $TMUX set-option -t "$SESSION" -q mouse on
+$TMUX set-option -t "$SESSION" -ga terminal-overrides ',xterm*:smcup@:rmcup@'
 
 # Create panes for each file
 for key in "${!FILES[@]}"; do
