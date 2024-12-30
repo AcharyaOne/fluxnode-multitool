@@ -18,7 +18,7 @@ if [ -d "/dat" ]; then
         [4 Watchdog]="sudo tail -F /dat/usr/lib/fluxwatchdog/watchdog_error.log"
         [2 FluxD]="sudo tail -F /dat/var/lib/fluxd/debug.log"
         [3 BenchMark]="sudo tail -F /dat/usr/lib/fluxbenchd/debug.log"
-        [1 FluxOS]="sudo tail -F dat/usr/lib/fluxos/debug.log"
+        [1 FluxOS]="sudo tail -F /dat/usr/lib/fluxos/debug.log"
     )
 fi
 
