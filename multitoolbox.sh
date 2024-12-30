@@ -958,7 +958,8 @@ else
   echo -e "${CYAN}5 - MongoDB Repair Assistant${NC}"
   echo -e "${CYAN}6 - Multinode configuration with UPNP communication (Needs Router with UPNP support)${NC}"
   echo -e "${CYAN}7 - FluxNode Diagnostics${NC}"
-  echo -e "${CYAN}8 - Hardware benchmark${NC}"
+  echo -e "${CYAN}8 - Log Viewer${NC}"
+  echo -e "${CYAN}9 - Hardware benchmark${NC}"
   echo -e "${YELLOW}================================================================${NC}"
 fi
 read -rp "Pick an option and hit ENTER: "
@@ -1033,6 +1034,11 @@ case "$REPLY" in
     if [[ -z $FLUXOS_VERSION ]]; then
       daemon_reconfiguration
     else
+      bash -i "/usr/lib/multitoolbox/log_viewer.sh"
+    fi
+ ;;
+ 9)
+    if [[ -n $FLUXOS_VERSION ]]; then
       echo -e "${GREEN}Module: Hardware benchmark${NC}"
       echo -e "${YELLOW}================================================================${NC}"
       if [[ -n $FLUXOS_VERSION ]]; then
@@ -1040,26 +1046,22 @@ case "$REPLY" in
       else
         bash -i <(curl -s https://raw.githubusercontent.com/RunOnFlux/fluxnode-multitool/$ROOT_BRANCH/hardwarebench.sh)
       fi
-    fi
- ;;
- 9)
-    if [[ ! -z $FLUXOS_VERSION ]]; then
-      exit
-    fi
-    clear
-    sleep 1
-    echo -e "${GREEN}Module: Flux Daemon service creator${NC}"
-    echo -e "${YELLOW}================================================================${NC}"
-    if [[ "$USER" == "root" || "$USER" == "ubuntu" || "$USER" == "admin" ]]; then
-      echo -e "${CYAN}You are currently logged in as ${GREEN}$USER${NC}"
-      echo -e "${CYAN}Please switch to the user account.${NC}"
+    else
+      clear
+      sleep 1
+      echo -e "${GREEN}Module: Flux Daemon service creator${NC}"
       echo -e "${YELLOW}================================================================${NC}"
-      echo -e "${NC}"
-      exit
-    fi 
-    create_service_scripts
-    create_service "install"
-    echo -e ""
+      if [[ "$USER" == "root" || "$USER" == "ubuntu" || "$USER" == "admin" ]]; then
+        echo -e "${CYAN}You are currently logged in as ${GREEN}$USER${NC}"
+        echo -e "${CYAN}Please switch to the user account.${NC}"
+        echo -e "${YELLOW}================================================================${NC}"
+        echo -e "${NC}"
+        exit
+      fi 
+      create_service_scripts
+      create_service "install"
+      echo -e ""
+    fi  
 	;;
 	10)
     if [[ ! -z $FLUXOS_VERSION ]]; then
