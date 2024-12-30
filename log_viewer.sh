@@ -37,7 +37,6 @@ for key in "${!FILES[@]}"; do
     FILE_PATH=$(echo "${FILES[${key}]}" | awk '{print $NF}')
     
     if [ -e "$FILE_PATH" ]; then
-        echo "Creating tmux pane for ${key}: ${FILES[${key}]}"  # Debugging output
         $TMUX -q split-window -t "$SESSION" "printf '\033]2;%s\033\\' '${key}' ; eval ${FILES[${key}]}"
         $TMUX -q select-layout -t "$SESSION" "$LAYOUT"
     else
