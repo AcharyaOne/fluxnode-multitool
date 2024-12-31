@@ -1,63 +1,80 @@
 #!/bin/bash
-
 set +o history
-#
-# Script to launch tmux in tiled mode with the most common log files being tailed
-#
-
-TMUX=$(type -p tmux) || { echo "This script requires tmux"; exit 1; }
-
+TMUX=$(command -v tmux) || { echo "This script requires tmux. Please install it."; exit 1; }
 SESSION="FLUX-$$"
+LAYOUT="tiled"
 
-NOKILL=0
-LAYOUT=tiled
-
+# Log files and their titles
 declare -A FILES
-if [ -d "/dat" ]; then
-    FILES+=(
-        [4 Watchdog]="sudo tail -F /dat/usr/lib/fluxwatchdog/watchdog_error.log"
-        [2 FluxD]="sudo tail -F /dat/var/lib/fluxd/debug.log"
-        [3 BenchMark]="sudo tail -F /dat/usr/lib/fluxbenchd/debug.log"
-        [1 FluxOS]="sudo tail -F /dat/usr/lib/fluxos/debug.log"
-    )
-fi
 
+FILES+=(
+    [Watchdog]="/dat/usr/lib/fluxwatchdog/watchdog_error.log"
+    [FluxD]="/dat/var/lib/fluxd/debug.log"
+    [BenchMark]="/dat/usr/lib/fluxbenchd/debug.log"
+    [FluxOS]="/dat/usr/lib/fluxos/debug.log"
+)
+
+# Cleanup function
 function at_exit() {
     $TMUX kill-session -t "$SESSION" >/dev/null 2>&1
 }
-[[ "$NOKILL" == "1" ]] || trap at_exit EXIT
 
-$TMUX -q new-session -d -s "$SESSION" -n Main "printf '\033]2;Main\033\\' ; bash"
+# Trap SIGINT (Ctrl+C) and SIGTERM to cleanup
+trap at_exit SIGINT SIGTERM EXIT
 
-$TMUX set-option -t "$SESSION" -q mouse on
-$TMUX set-option -t "$SESSION" -ga terminal-overrides ',xterm*:smcup@:rmcup@'
-
-# Create panes for each file
-for key in "${!FILES[@]}"; do
-    # Extract file path from the command
-    FILE_PATH=$(echo "${FILES[${key}]}" | awk '{print $NF}')
-    
-    if [ -e "$FILE_PATH" ]; then
-        $TMUX -q split-window -t "$SESSION" "printf '\033]2;%s\033\\' '${key}' ; eval ${FILES[${key}]}"
-        $TMUX -q select-layout -t "$SESSION" "$LAYOUT"
-    else
-        echo "Skipping ${key}: File not found (${FILE_PATH})"
+VALID_FILES=()
+for title in "${!FILES[@]}"; do
+    LOG_FILE="${FILES[$title]}"
+    if [ -f "$LOG_FILE" ]; then
+        VALID_FILES+=("$title")
     fi
 done
 
-# Ensure the first pane is removed
-$TMUX -q kill-pane -t "${SESSION}.0"
+# Exit if no valid log files are found
+if [ "${#VALID_FILES[@]}" -eq 0 ]; then
+    echo "No valid log files found. Exiting."
+    echo -e ""
+    exit 1
+fi
 
-# Final layout adjustments
-$TMUX -q select-layout -t "$SESSION" "$LAYOUT"
+# Start tmux session if it doesn't already exist
+if ! $TMUX has-session -t "$SESSION" 2>/dev/null; then
+    $TMUX new-session -d -s "$SESSION" -n Main "printf '\033]2;Main\033\\' ; bash"
+else
+    echo "Session $SESSION already exists. Attaching to it."
+    $TMUX attach -t "$SESSION"
+    exit 0
+fi
 
-# Set tmux options for appearance
+# Enable mouse and adjust terminal overrides
+$TMUX set-option -t "$SESSION" -q mouse on
+$TMUX set-option -t "$SESSION" -ga terminal-overrides ',xterm*:smcup@:rmcup@'
+
+# Create panes for each log file
+for title in "${!FILES[@]}"; do
+    LOG_FILE="${FILES[$title]}"
+    if [ -f "$LOG_FILE" ]; then
+        $TMUX split-window -t "$SESSION" "printf '\033]2;%s\033\\' '${title}' ; sudo tail -F '${LOG_FILE}'"
+        $TMUX select-layout -t "$SESSION" "$LAYOUT"
+    else
+        echo "Skipping ${title}: File not found (${LOG_FILE})"
+    fi
+done
+
+# Remove the initial empty pane
+$TMUX kill-pane -t "${SESSION}.0"
+
+# Final tmux layout adjustments
+$TMUX select-layout -t "$SESSION" "$LAYOUT"
+
+# Customize tmux appearance
 $TMUX set-option -t "$SESSION" -g status-style bg=colour235,fg=yellow,dim
 $TMUX set-window-option -t "$SESSION" -g window-status-style fg=brightblue,bg=colour236,dim
 $TMUX set-window-option -t "$SESSION" -g window-status-current-style fg=brightred,bg=colour236,bright
 
-$TMUX -q set-window-option -t "$SESSION" synchronize-panes on
-$TMUX set-option -t "$SESSION" -w pane-border-status bottom
+# Synchronize panes for uniform control
+$TMUX set-window-option -t "$SESSION" synchronize-panes on
+$TMUX set-option -t "$SESSION" pane-border-status bottom
 
 # Attach to the tmux session
-$TMUX -q attach -t "$SESSION" >/dev/null 2>&1
+$TMUX attach -t "$SESSION" >/dev/null 2>&1
