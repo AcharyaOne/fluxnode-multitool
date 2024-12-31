@@ -24,6 +24,7 @@ FILES+=(
 # Cleanup function
 function at_exit() {
     $TMUX kill-session -t "$SESSION" >/dev/null 2>&1
+    set -o history
 }
 
 # Trap SIGINT (Ctrl+C) and SIGTERM to cleanup
