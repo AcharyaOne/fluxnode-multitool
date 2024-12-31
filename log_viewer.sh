@@ -1,17 +1,24 @@
 #!/bin/bash
 set +o history
+
+export NEWT_COLORS='
+title=black,
+'
+
 TMUX=$(command -v tmux) || { echo "This script requires tmux. Please install it."; exit 1; }
 SESSION="FLUX-$$"
 LAYOUT="tiled"
 
 # Log files and their titles
 declare -A FILES
-
 FILES+=(
-    [Watchdog]="/dat/usr/lib/fluxwatchdog/watchdog_error.log"
-    [FluxD]="/dat/var/lib/fluxd/debug.log"
-    [BenchMark]="/dat/usr/lib/fluxbenchd/debug.log"
+    [Flux-Watchdog]="/dat/usr/lib/watchdog/watchdog_error.log"
+    [Flux-Daemon]="/dat/var/lib/fluxd/debug.log"
+    [Flux-Benchmark]="/dat/usr/lib/fluxbenchd/debug.log"
     [FluxOS]="/dat/usr/lib/fluxos/debug.log"
+    [SAS-DEBUG]="/var/log/sas.log"
+    [SAS-ERROR]="/var/log/sas-error.log"
+    [MongoDB]="/dat/var/log/mongodb/mongod.log"
 )
 
 # Cleanup function
@@ -22,20 +29,36 @@ function at_exit() {
 # Trap SIGINT (Ctrl+C) and SIGTERM to cleanup
 trap at_exit SIGINT SIGTERM EXIT
 
-VALID_FILES=()
+# Verify if all files exist and prepare the whiptail menu options
+MENU_OPTIONS=()
 for title in "${!FILES[@]}"; do
     LOG_FILE="${FILES[$title]}"
     if [ -f "$LOG_FILE" ]; then
-        VALID_FILES+=("$title")
+        MENU_OPTIONS+=("$title" "                  " ON)
+    else
+        echo "Skipping ${title}: File not found (${LOG_FILE})"
     fi
 done
 
 # Exit if no valid log files are found
-if [ "${#VALID_FILES[@]}" -eq 0 ]; then
-    echo "No valid log files found. Exiting."
+if [ "${#MENU_OPTIONS[@]}" -eq 0 ]; then
+    echo -e "No valid log files found. Exiting."
     echo -e ""
     exit 1
 fi
+
+# Display whiptail menu
+SELECTED_FILES=$(whiptail --title "Select Log Files" --checklist \
+    "\nChoose which log files to monitor. Navigate using arrow keys, toggle selection with Spacebar, and confirm with Enter. To close the log monitor, press Ctrl+C.\n" 25 50 10 \
+    "${MENU_OPTIONS[@]}" 3>&1 1>&2 2>&3)
+
+# Handle user cancel or no selection
+if [ $? -ne 0 ] || [ -z "$SELECTED_FILES" ]; then
+    exit 1
+fi
+
+# Parse selected files into an array
+SELECTED_FILES=($(echo "$SELECTED_FILES" | tr -d '"'))
 
 # Start tmux session if it doesn't already exist
 if ! $TMUX has-session -t "$SESSION" 2>/dev/null; then
@@ -50,15 +73,12 @@ fi
 $TMUX set-option -t "$SESSION" -q mouse on
 $TMUX set-option -t "$SESSION" -ga terminal-overrides ',xterm*:smcup@:rmcup@'
 
-# Create panes for each log file
-for title in "${!FILES[@]}"; do
+# Create panes for each selected file
+for title in "${SELECTED_FILES[@]}"; do
     LOG_FILE="${FILES[$title]}"
-    if [ -f "$LOG_FILE" ]; then
-        $TMUX split-window -t "$SESSION" "printf '\033]2;%s\033\\' '${title}' ; sudo tail -F '${LOG_FILE}'"
-        $TMUX select-layout -t "$SESSION" "$LAYOUT"
-    else
-        echo "Skipping ${title}: File not found (${LOG_FILE})"
-    fi
+    echo "Opening pane for: $title ($LOG_FILE)"
+    $TMUX split-window -t "$SESSION" "printf '\033]2;%s\033\\' '${title}' ; sudo tail -F '${LOG_FILE}'"
+    $TMUX select-layout -t "$SESSION" "$LAYOUT"
 done
 
 # Remove the initial empty pane
