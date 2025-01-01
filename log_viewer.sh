@@ -78,7 +78,11 @@ $TMUX set-option -t "$SESSION" -ga terminal-overrides ',xterm*:smcup@:rmcup@'
 for title in "${SELECTED_FILES[@]}"; do
     LOG_FILE="${FILES[$title]}"
     echo "Opening pane for: $title ($LOG_FILE)"
-    $TMUX split-window -t "$SESSION" "printf '\033]2;%s\033\\' '${title}' ; sudo tail -F '${LOG_FILE}'"
+    if jq empty ${LOG_FILE} > /dev/null 2>&1; then
+       $TMUX split-window -t "$SESSION" "printf '\033]2;%s\033\\' '${title}' ; sudo tail -F '${LOG_FILE}' | jq ."
+    else
+      $TMUX split-window -t "$SESSION" "printf '\033]2;%s\033\\' '${title}' ; sudo tail -F '${LOG_FILE}'"
+    fi
     $TMUX select-layout -t "$SESSION" "$LAYOUT"
 done
 
