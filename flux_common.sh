@@ -1958,12 +1958,148 @@ function bootstrap_new() {
 		fi
 	fi
 }
+
+##### STREAM SECTION
+# Clean data directories
+clean() {
+    local silent_mode=$1
+    cd $DEST_PATH 2>/dev/null
+    sudo rm -rf blocks chainstate determ_zelnodes 2>/dev/null
+    cd 2>/dev/null
+    [ "$silent_mode" != "true" ] && echo -e "🧹 Cleaned data directories."
+}
+
+# Stop services
+stop_xservices() {
+    local silent_mode=$1
+    [ "$silent_mode" != "true" ] && echo -e "⏹️ Stopping services..."
+    sudo systemctl stop "$FLUXD_SERVICE"
+    if [ -n "$FLUXOS_VERSION" ]; then
+        sudo systemctl stop "$WATCHDOG_SERVICE"
+    else
+        pm2 stop watchdog
+    fi
+}
+
+# Start services
+start_xservices() {
+    local silent_mode=$1
+    [ "$silent_mode" != "true" ] && echo -e "▶️ Starting services..."
+    sudo systemctl start "$FLUXD_SERVICE"
+    if [ -n "$FLUXOS_VERSION" ]; then
+        sudo systemctl start "$WATCHDOG_SERVICE"
+    else
+        pm2 start watchdog --watch
+    fi
+}
+
+# Get local machine's IP address
+get_local_ip() {
+    local silent_mode=$1
+    [ "$silent_mode" != "true" ] && echo -e "🌐 Getting local LAN IP address..."
+    local_ip=$(upnpc -l 2>/dev/null | awk -F': ' '/Local LAN ip address/ {print $2}')
+    
+    if [ -z "$local_ip" ]; then
+        [ "$silent_mode" != "true" ] && echo -e "❌ Local LAN IP not found." >&2
+        exit 1
+    else
+        [ "$silent_mode" != "true" ] && echo -e "✅ Local LAN IP: $local_ip"
+    fi
+    
+    echo "$local_ip"
+}
+
+# Discover UPnP nodes and group them by tier
+discover_upnp_nodes() {
+    local silent_mode=$1
+    [ "$silent_mode" != "true" ] && echo -e "🔍 Discovering UPnP nodes..."
+
+    local_ip=$(get_local_ip "$silent_mode")
+    if [ -n "$local_ip" ]; then
+        local raw_nodes=($(upnpc -l 2>/dev/null | \
+            awk '/Flux_Backend_API/ && !/Flux_Backend_API_SSL/ {print $3}' | \
+            awk -F'->' '{print $2}' | \
+            grep -v "$local_ip" | \
+            sort -u))
+            
+        unset node_map
+        declare -A node_map  # Associative array to store nodes by tier
+        tiers=("stratus_new" "nimbus_new" "cumulus_new")  # Priority tiers
+
+        for node in "${raw_nodes[@]}"; do
+            [ "$silent_mode" != "true" ] && echo -e "🛠️ Checking tier information for node: $node"
+            response=$(curl -s --max-time 5 -X GET "http://${node}/flux/nodetier")
+            tier=$(echo "$response" | jq -r '.data' 2>/dev/null)
+            status=$(echo "$response" | jq -r '.status' 2>/dev/null)
+
+            if [ "$status" == "success" ] && [ -n "$tier" ]; then
+                if [[ " ${tiers[@]} " =~ " $tier " ]]; then
+                    [ "$silent_mode" != "true" ] && echo -e "✨ Node $node belongs to tier: $tier"
+                    node_map["$tier"]+="$node "
+                fi
+            else
+                [ "$silent_mode" != "true" ] && echo -e "❌ Node $node failed tier verification." >&2
+            fi
+        done
+
+        # Print grouped nodes by tier in order of priority
+        if [ ${#node_map[@]} -gt 0 ]; then
+            [ "$silent_mode" != "true" ] && echo -e "📊 Nodes grouped by tier:"
+            for tier in "${tiers[@]}"; do
+                if [ -n "${node_map[$tier]}" ]; then
+                    [ "$silent_mode" != "true" ] && echo "  - $tier: ${node_map[$tier]}"
+                fi
+            done
+            return 0
+        else
+            [ "$silent_mode" != "true" ] && echo -e "🚫 No valid nodes found for any tier." >&2
+            return 1
+        fi
+    else
+        return 1
+    fi
+}
+
+# Stream chain locally from prioritized nodes
+stream_chain_locally() {
+    local silent_mode=$1
+    [ "$silent_mode" != "true" ] && echo -e "📂 Starting local chain streaming..."
+    for tier in "stratus_new" "nimbus_new" "cumulus_new"; do
+        nodes=(${node_map[$tier]})
+        for node in "${nodes[@]}"; do
+            [ "$silent_mode" != "true" ] && echo -e "📡 Attempting to stream chain from node: $node"
+            curl -s --max-time 5 -X POST "http://${node}/streamchain" | tar -xv -C "$DEST_PATH"
+            if [ $? -eq 0 ]; then
+                [ "$silent_mode" != "true" ] && echo -e "✅ Successfully streamed chain from $node"
+                if [ -n "$FLUXOS_VERSION" ]; then
+                    sudo chown -R fluxd:fluxd "$DEST_PATH"
+                fi
+                return 0
+            else
+                [ "$silent_mode" != "true" ] && echo -e "❌ Failed to stream chain from $node" >&2
+                clean "$silent_mode"
+            fi
+        done
+    done
+
+    [ "$silent_mode" != "true" ] && echo -e "🚫 Failed to stream chain locally from all nodes" >&2
+    clean "$silent_mode"
+    return 1
+}
+######################################################################################################
 function bootstrap_manual() {
-	CHOICE=$(
-		whiptail --title "FluxNode Installation" --menu "Choose a method how to get bootstrap file" 10 47 2  \
-		"1)" "Download from source build in script" \
-		"2)" "Download from own source" 3>&2 2>&1 1>&3
-	)
+    
+    discover_upnp_nodes "true"
+    if [ $? -eq 0 ]; then
+        CHOICE=$(
+            whiptail --title "FluxNode Installation" --menu "Choose a method how to get bootstrap file" 10 47 2  \
+            "1)" "Download from CDN servers" \
+            "2)" "Stream from local network" 3>&2 2>&1 1>&3
+        )
+    else
+        CHOICE="1)"
+    fi
+
 	case $CHOICE in
 	"1)")
 		#server_list=("http://cdn-11.runonflux.io/apps/fluxshare/getfile/" "http://cdn-12.runonflux.io/apps/fluxshare/getfile/" "http://cdn-13.runonflux.io/apps/fluxshare/getfile/" "http://cdn-10.runonflux.io/apps/fluxshare/getfile/")
@@ -1990,20 +2126,48 @@ function bootstrap_manual() {
 		sleep 1
 	;;
 	"2)")
-		DOWNLOAD_URL="$(whiptail --title "Flux daemon bootstrap setup" --inputbox "Enter your URL (zip, tar.gz)" 8 72 3>&1 1>&2 2>&3)"
-		echo -e "${ARROW} ${CYAN}Downloading File: ${GREEN}$DOWNLOAD_URL ${NC}"
-		BOOTSTRAP_FILE="${DOWNLOAD_URL##*/}"
-		sudo wget --tries 5 -O $DATA_PATH/$BOOTSTRAP_FILE $DOWNLOAD_URL -q --show-progress
-		if [[ "$Mode" != "install" ]]; then
-			stop_service
-		fi
-		if [[ "$BOOTSTRAP_FILE" == *".zip"* ]]; then
-			echo -e "${ARROW} ${CYAN}Unpacking wallet bootstrap please be patient...${NC}"
-			sudo unzip -o $DATA_PATH/$BOOTSTRAP_FILE -d $FLUX_DAEMON_PATH > /dev/null 2>&1
-		else
-			tar_file_unpack "$DATA_PATH/$BOOTSTRAP_FILE" "$FLUX_DAEMON_PATH"
-			sleep 1
-		fi
+	    if [ -n "$FLUXOS_VERSION" ]; then
+            DEST_PATH="/dat/var/lib/fluxd"
+            FLUXD_SERVICE="fluxd"
+            WATCHDOG_SERVICE="flux-watchdog"
+        else
+            DEST_PATH="$HOME/.flux"
+            FLUXD_SERVICE="zelcash"
+        fi
+
+        SECONDS=0  # Start timer
+        silent_mode="false"
+
+        discover_upnp_nodes "$silent_mode"
+        if [ $? -eq 0 ]; then
+            [ "$silent_mode" != "true" ] && echo -e "✅ Successfully discovered and grouped nodes by tier."
+            # Stop services before streaming
+            stop_xservices "$silent_mode"
+            # Clean old data
+            clean "$silent_mode"
+            # Stream the chain locally
+            stream_chain_locally "$silent_mode"
+            if [ $? -ne 0 ]; then
+                [ "$silent_mode" != "true" ] && echo -e "❌ Chain streaming failed."
+                # Start services even if chain streaming fails
+                start_xservices "$silent_mode"
+                exit 1
+            fi
+            # Start services after successful streaming
+            start_xservices "$silent_mode"
+            # Calculate elapsed time
+            elapsed=$SECONDS
+            hours=$((elapsed / 3600))
+            minutes=$(((elapsed % 3600) / 60))
+            seconds=$((elapsed % 60))
+            [ "$silent_mode" != "true" ] && echo -e "🎉 Chain streaming process completed successfully."
+            [ "$silent_mode" != "true" ] && echo -e "⏱️ Total execution time: ${hours}h ${minutes}m ${seconds}s."
+            echo -e ""
+        else
+            [ "$silent_mode" != "true" ] && echo -e "❌ Failed to discover and verify nodes."
+            echo -e ""
+            exit 1
+        fi
 	;;
 	esac
 }
