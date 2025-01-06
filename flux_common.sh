@@ -2068,7 +2068,7 @@ stream_chain_locally() {
         nodes=(${node_map[$tier]})
         for node in "${nodes[@]}"; do
             [ "$silent_mode" != "true" ] && echo -e "📡 Attempting to stream chain from node: $node"
-            curl -s -X POST "http://${node}/streamchain" | tar -xv -C "$DEST_PATH"
+            curl -s -X POST "http://${node}/flux/streamchain" | tar -xv -C "$DEST_PATH"
             if [ $? -eq 0 ]; then
                 [ "$silent_mode" != "true" ] && echo -e "✅ Successfully streamed chain from $node"
                 if [ -n "$FLUXOS_VERSION" ]; then
