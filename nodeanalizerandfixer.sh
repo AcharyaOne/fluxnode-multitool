@@ -198,22 +198,20 @@ if [[ -n $FLUXOS_VERSION ]]; then
           sudo apt install -y bc > /dev/null 2>&1 && sleep 1
   fi
   echo -e "${NC}"
-
-  if [[ -f /var/log/sas-error.log ]]; then
-    error_last_line=$(sudo cat /var/log/sas-error.log | tail -n1)
-    error_content=$(sudo cat /var/log/sas-error.log)
-    debug_content=$(sudo cat /var/log/sas.log | tail -n50)
-    echo -e "${WORNING} ${CYAN}Flux System Attestation Service (SAS) error detected!${NC}"
-    echo -e "${PIN} ${CYAN}Log file: /var/log/sas-error.log${NC}"
-    echo -e "${PIN} ${CYAN}Last error line: $error_last_line${NC}"
+  BOOT_ID=$(sudo cat /proc/sys/kernel/random/boot_id)
+  $LOG_FILE="/var/log/sas.log"
+  LAST_LOG_LINE=$(sudo grep -n "\"boot_id\":\"$BOOT_ID\"" "$LOG_FILE" | sudo grep -E '"level":[5-9][0-9]' | sudo tail -n 1 | cut -d: -f1)
+  if [[ -n "$LAST_LOG_LINE" ]]; then
+    START_LINE=$((LAST_LOG_LINE - 10))
+    if [[ $START_LINE -lt 1 ]]; then
+      START_LINE=1
+    fi
+    echo -e "${WORNING} ${CYAN}Flux System Attestation Service (SAS) error detected! ${NC}"
+    echo -e "${PIN} ${CYAN}Log file: /var/log/sas.log ${NC}"
+    echo -e "${BOOK}Last error and 10 prior entries for the current boot ${NC}"
+    echo -e "---------------------------------------------------------------------"
+    sudo sed -n "${START_LINE},${LAST_LOG_LINE}p" "$LOG_FILE" | pino-pretty --colorize --translateTime 'dd-mm-yyyy HH:MM:ss'
     echo -e ""
-    echo -e "${BOOK}Content of sas-error.log${NC}"
-    echo -e "-------------------------------------------------------------"
-    echo -e "$error_content"
-    echo -e "-------------------------------------------------------------"
-    echo -e "${BOOK}Content of sas.log${NC}"
-    echo -e "-------------------------------------------------------------"
-    echo -e "$debug_content"
     exit
   fi
 
