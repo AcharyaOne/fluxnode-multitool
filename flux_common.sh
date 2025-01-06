@@ -2023,7 +2023,7 @@ discover_upnp_nodes() {
             sort -u))
             
         unset node_map
-        declare -A node_map  # Associative array to store nodes by tier
+        declare -g -A node_map
         tiers=("stratus_new" "nimbus_new" "cumulus_new")  # Priority tiers
 
         for node in "${raw_nodes[@]}"; do
