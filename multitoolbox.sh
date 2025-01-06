@@ -534,7 +534,7 @@ function flux_daemon_bootstrap() {
 	fi
   cd
 	echo -e "${NC}"
-	config_veryfity
+	#config_veryfity
 	bootstrap_new
 }
 function install_node(){
