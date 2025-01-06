@@ -1913,7 +1913,7 @@ function bootstrap_new() {
 	else
 		if [[ ! -f $DATA_PATH/install_conf.json ]]; then
 			bootstrap_manual
-			if [[ "$Mode" != "install" && "$server_offline" == "0" && CHOICE == "1)" ]]; then
+			if [[ "$Mode" != "install" && "$server_offline" == "0" && $CHOICE == "1)" ]]; then
 				start_service
         if [[ -f $DATA_PATH/$BOOTSTRAP_FILE && $BOOTSTRAP_FILE != "" ]]; then
 				    sudo rm -rf $DATA_PATH/$BOOTSTRAP_FILE > /dev/null 2>&1 && sleep 2
