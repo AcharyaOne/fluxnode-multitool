@@ -200,7 +200,7 @@ if [[ -n $FLUXOS_VERSION ]]; then
   echo -e "${NC}"
   BOOT_ID=$(sudo cat /proc/sys/kernel/random/boot_id)
   $LOG_FILE="/var/log/sas.log"
-  LAST_LOG_LINE=$(sudo grep -n "\"boot_id\":\"$BOOT_ID\"" "$LOG_FILE" | sudo grep -E '"level":[5-9][0-9]' | sudo tail -n 1 | cut -d: -f1)
+  LAST_LOG_LINE=$(grep -n "\"boot_id\":\"$BOOT_ID\"" "$LOG_FILE" | grep -E '"level":[5-9][0-9]' | tail -n 1 | cut -d: -f1)
   if [[ -n "$LAST_LOG_LINE" ]]; then
     START_LINE=$((LAST_LOG_LINE - 10))
     if [[ $START_LINE -lt 1 ]]; then
@@ -210,7 +210,7 @@ if [[ -n $FLUXOS_VERSION ]]; then
     echo -e "${PIN} ${CYAN}Log file: /var/log/sas.log ${NC}"
     echo -e "${BOOK}Last error and 10 prior entries for the current boot ${NC}"
     echo -e "---------------------------------------------------------------------"
-    sudo sed -n "${START_LINE},${LAST_LOG_LINE}p" "$LOG_FILE" | pino-pretty --colorize --translateTime 'dd-mm-yyyy HH:MM:ss'
+    sed -n "${START_LINE},${LAST_LOG_LINE}p" "$LOG_FILE" | pino-pretty --colorize --translateTime 'dd-mm-yyyy HH:MM:ss'
     echo -e ""
     exit
   fi
