@@ -2151,6 +2151,7 @@ function bootstrap_manual() {
                 [ "$silent_mode" != "true" ] && echo -e "❌ Chain streaming failed."
                 # Start services even if chain streaming fails
                 start_xservices "$silent_mode"
+                echo -e ""
                 exit 1
             fi
             # Start services after successful streaming
