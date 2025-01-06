@@ -16,8 +16,7 @@ FILES+=(
     [Flux-Daemon]="/dat/var/lib/fluxd/debug.log"
     [Flux-Benchmark]="/dat/usr/lib/fluxbenchd/debug.log"
     [FluxOS]="/dat/usr/lib/fluxos/debug.log"
-    [SAS-DEBUG]="/var/log/sas.log"
-    [SAS-ERROR]="/var/log/sas-error.log"
+    [SAS]="/var/log/sas.log"
     [MongoDB]="/dat/var/log/mongodb/mongod.log"
 )
 
@@ -79,7 +78,7 @@ for title in "${SELECTED_FILES[@]}"; do
     LOG_FILE="${FILES[$title]}"
     echo "Opening pane for: $title ($LOG_FILE)"
     if sudo jq empty ${LOG_FILE} > /dev/null 2>&1; then
-       $TMUX split-window -t "$SESSION" "printf '\033]2;%s\033\\' '${title}' ; sudo tail -F '${LOG_FILE}' | jq ."
+       $TMUX split-window -t "$SESSION" "printf '\033]2;%s\033\\' '${title}' ; sudo tail -F '${LOG_FILE}' | pino-pretty --colorize --translateTime 'dd-mm-yyyy HH:MM:ss'"
     else
       $TMUX split-window -t "$SESSION" "printf '\033]2;%s\033\\' '${title}' ; sudo tail -F '${LOG_FILE}'"
     fi
