@@ -1900,10 +1900,8 @@ function download_and_unpack() {
     # Record the start time
     START_TIME=$(date +%s)
     # Download and extract with progress using pigz
-    echo -e "${ARROW} ${CAYN}Downloading File: ${GREEN}$DOWNLOAD_URL ${NC}"
-    echo -e "📥 Starting download and extraction..."
+    echo -e "${ARROW} ${CYAN}Downloading File: ${GREEN}$DOWNLOAD_URL ${NC}"
     if curl -sSL "$DOWNLOAD_URL" | pv -s "$FILE_SIZE" | pigz -dc | tar -x -C "$FLUX_DAEMON_PATH"; then
-        echo -e "✅ Download and extraction completed successfully."
         # Record the end time
         END_TIME=$(date +%s)
         ELAPSED_TIME=$((END_TIME - START_TIME))
@@ -1911,9 +1909,11 @@ function download_and_unpack() {
         MINUTES=$(( (ELAPSED_TIME % 3600) / 60 ))
         SECONDS=$((ELAPSED_TIME % 60))
         # Print completion message with formatted time
-        echo -e "⏱️ Download and extraction completed in ${HOURS}h ${MINUTES}m ${SECONDS}s."
+        echo -e "${ARROW} Download and extraction completed in ${HOURS}h ${MINUTES}m ${SECONDS}s."
     else
         echo -e "❌ Error: Download or extraction failed."
+        clean
+        echo -e ""
         exit 1
     fi
 }
