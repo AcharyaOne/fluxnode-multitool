@@ -202,7 +202,7 @@ if [[ -n $FLUXOS_VERSION ]]; then
   BOOT_ID=$(sudo cat /proc/sys/kernel/random/boot_id)
   LOG_FILE="/var/log/sas.log"
   LAST_LOG_LINE=$(grep -n "\"boot_id\":\"$BOOT_ID\"" "$LOG_FILE" | grep -E '"level":[5-9][0-9]' | tail -n 1 | cut -d: -f1)
-  if [[ -n "$LAST_LOG_LINE" && $MOUNT_CHECK != "" ]]; then
+  if [[ -n "$LAST_LOG_LINE" && $MOUNT_CHECK == "" ]]; then
     START_LINE=$((LAST_LOG_LINE - 10))
     if [[ $START_LINE -lt 1 ]]; then
       START_LINE=1
