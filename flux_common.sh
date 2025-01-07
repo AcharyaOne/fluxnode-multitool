@@ -2127,10 +2127,10 @@ function bootstrap_manual() {
 		if [[ "$DB_HIGHT" != "" ]]; then
 			echo -e "${ARROW} ${CYAN}Flux daemon bootstrap height: ${GREEN}$DB_HIGHT${NC}"
 		fi
-        download_and_unpack
 		if [[ "$Mode" != "install" ]]; then
 			stop_service
 		fi
+    download_and_unpack
 	;;
 	"2)")
 	    if [ -n "$FLUXOS_VERSION" ]; then
