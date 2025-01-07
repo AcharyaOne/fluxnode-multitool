@@ -1909,7 +1909,7 @@ function download_and_unpack() {
         MINUTES=$(( (ELAPSED_TIME % 3600) / 60 ))
         SECONDS=$((ELAPSED_TIME % 60))
         # Print completion message with formatted time
-        echo -e "${ARROW} Download and extraction completed in ${HOURS}h ${MINUTES}m ${SECONDS}s."
+        echo -e "${ARROW} ${CYAN}Download and extraction completed in ${GREEN}${HOURS}h ${MINUTES}m ${SECONDS}s${NC}"
     else
         echo -e "❌ Error: Download or extraction failed."
         clean
