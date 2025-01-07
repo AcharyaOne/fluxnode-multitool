@@ -1890,39 +1890,62 @@ function cdn_speedtest() {
 	fi
    #echo -e "${CHECK_MARK} ${GREEN}Fastest Server: ${YELLOW}$DOWNLOAD_URL${NC}"
 }
+
+function download_and_unpack() {
+    FILE_SIZE=$(curl -sI "$DOWNLOAD_URL" | grep -i "content-length" | awk '{print $2}' | tr -d '\r')
+    if [ -z "$FILE_SIZE" ]; then
+        echo "⚠️ Unable to retrieve file size. Progress will be approximate."
+        FILE_SIZE=0
+    fi
+    # Record the start time
+    START_TIME=$(date +%s)
+    # Download and extract with progress using pigz
+    echo -e "${ARROW} ${CAYN}Downloading File: ${GREEN}$DOWNLOAD_URL ${NC}"
+    echo -e "📥 Starting download and extraction..."
+    if curl -sSL "$DOWNLOAD_URL" | pv -s "$FILE_SIZE" | pigz -dc | tar -x -C "$FLUX_DAEMON_PATH"; then
+        echo -e "✅ Download and extraction completed successfully."
+        # Record the end time
+        END_TIME=$(date +%s)
+        ELAPSED_TIME=$((END_TIME - START_TIME))
+        HOURS=$((ELAPSED_TIME / 3600))
+        MINUTES=$(( (ELAPSED_TIME % 3600) / 60 ))
+        SECONDS=$((ELAPSED_TIME % 60))
+        # Print completion message with formatted time
+        echo -e "⏱️ Download and extraction completed in ${HOURS}h ${MINUTES}m ${SECONDS}s."
+    else
+        echo -e "❌ Error: Download or extraction failed."
+        exit 1
+    fi
+}
+
 function bootstrap_new() {
 	echo -e "${ARROW} ${YELLOW}Restore daemon chain from bootstrap${NC}"
 	if ! wget --version > /dev/null 2>&1 ; then
 		sudo apt install -y wget > /dev/null 2>&1 && sleep 2
+	fi
+ 	if ! pigz --version > /dev/null 2>&1 ; then
+		sudo apt install -y pigz > /dev/null 2>&1 && sleep 2
 	fi
 	if ! wget --version > /dev/null 2>&1 ; then
 		echo -e "${WORNING} ${CYAN}Wget not installed, operation aborted.. ${NC}" && sleep 1
 		echo -e ""
 		return
 	fi
-	Mode="$1"
-	bootstrap_local
-	if [[ -f "$FILE_PATH" ]]; then
-		if [[ "$Mode" != "install" ]]; then
-			start_service
-			if [[ -f $FILE_PATH && $FILE_PATH != "" ]]; then
-				sudo rm -rf $FILE_PATH > /dev/null 2>&1 && sleep 2
-			fi
-		fi
+ 	if ! pigz --version > /dev/null 2>&1 ; then
+		echo -e "${WORNING} ${CYAN}Pigz not installed, operation aborted.. ${NC}" && sleep 1
+		echo -e ""
 		return
-	else
-		if [[ ! -f $DATA_PATH/install_conf.json ]]; then
-			bootstrap_manual
-			if [[ "$Mode" != "install" && "$server_offline" == "0" && $CHOICE == "1)" ]]; then
-				start_service
-        if [[ -f $DATA_PATH/$BOOTSTRAP_FILE && $BOOTSTRAP_FILE != "" ]]; then
-				    sudo rm -rf $DATA_PATH/$BOOTSTRAP_FILE > /dev/null 2>&1 && sleep 2
-        fi
-			fi
-			return
-		fi
 	fi
+	Mode="$1"
 
+    if [[ ! -f $DATA_PATH/install_conf.json ]]; then
+        bootstrap_manual
+        if [[ "$Mode" != "install" && "$server_offline" == "0" && $CHOICE == "1)" ]]; then
+            start_service
+        fi
+        return
+    fi
+	
 	if [[  "$bootstrap_url" == "0"  || "$bootstrap_url" == "" || "$bootstrap_url" == "null" ]]; then
 		cdn_speedtest "0" "6"
 		if [[ "$server_offline" == "1" ]]; then
@@ -1933,29 +1956,17 @@ function bootstrap_new() {
 		if [[ "$Mode" != "install" ]]; then
 			stop_service
 		fi
-		echo -e "${ARROW} ${CAYN}Downloading File: ${GREEN}$DOWNLOAD_URL ${NC}"
-		sudo wget --tries 5 -O $DATA_PATH/$BOOTSTRAP_FILE $DOWNLOAD_URL -q --show-progress
-		tar_file_unpack "$DATA_PATH/$BOOTSTRAP_FILE" "$FLUX_DAEMON_PATH"
+        download_and_unpack
 	else
 	  if [[ "$Mode" != "install" ]]; then
 			stop_service
 		fi
 		DOWNLOAD_URL="$bootstrap_url"
-		echo -e "${ARROW} ${CAYN}Downloading File: ${GREEN}$DOWNLOAD_URL ${NC}"
-		sudo wget --tries 5 -O $DATA_PATH/$BOOTSTRAP_FILE $DOWNLOAD_URL -q --show-progress
-		tar_file_unpack "$DATA_PATH/$BOOTSTRAP_FILE" "$FLUX_DAEMON_PATH"
+        download_and_unpack
 	fi
 
 	if [[ "$Mode" != "install" ]]; then
 		start_service
-	fi
-
-	if [[ -z "$bootstrap_zip_del" ]]; then
-		sudo rm -rf $DATA_PATH/$BOOTSTRAP_FILE > /dev/null 2>&1
-	else
-		if [[ "$bootstrap_zip_del" == "1" ]]; then
-			sudo rm -rf $DATA_PATH/$BOOTSTRAP_FILE > /dev/null 2>&1
-		fi
 	fi
 }
 
@@ -2088,7 +2099,6 @@ stream_chain_locally() {
 }
 ######################################################################################################
 function bootstrap_manual() {
-    
     discover_upnp_nodes "true"
     if [ $? -eq 0 ]; then
         CHOICE=$(
@@ -2117,13 +2127,10 @@ function bootstrap_manual() {
 		if [[ "$DB_HIGHT" != "" ]]; then
 			echo -e "${ARROW} ${CYAN}Flux daemon bootstrap height: ${GREEN}$DB_HIGHT${NC}"
 		fi
-		echo -e "${ARROW} ${CYAN}Downloading File: ${GREEN}$DOWNLOAD_URL ${NC}"
-		sudo wget --tries 5 -O $DATA_PATH/$BOOTSTRAP_FILE $DOWNLOAD_URL -q --show-progress
+        download_and_unpack
 		if [[ "$Mode" != "install" ]]; then
 			stop_service
 		fi
-		tar_file_unpack "$DATA_PATH/$BOOTSTRAP_FILE" "$FLUX_DAEMON_PATH"
-		sleep 1
 	;;
 	"2)")
 	    if [ -n "$FLUXOS_VERSION" ]; then
