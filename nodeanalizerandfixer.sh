@@ -198,17 +198,18 @@ if [[ -n $FLUXOS_VERSION ]]; then
           sudo apt install -y bc > /dev/null 2>&1 && sleep 1
   fi
   echo -e "${NC}"
+  MOUNT_CHECK=$(df | grep "/dat")
   BOOT_ID=$(sudo cat /proc/sys/kernel/random/boot_id)
   LOG_FILE="/var/log/sas.log"
   LAST_LOG_LINE=$(grep -n "\"boot_id\":\"$BOOT_ID\"" "$LOG_FILE" | grep -E '"level":[5-9][0-9]' | tail -n 1 | cut -d: -f1)
-  if [[ -n "$LAST_LOG_LINE" ]]; then
+  if [[ -n "$LAST_LOG_LINE" && $MOUNT_CHECK != "" ]]; then
     START_LINE=$((LAST_LOG_LINE - 10))
     if [[ $START_LINE -lt 1 ]]; then
       START_LINE=1
     fi
     echo -e "${WORNING} ${CYAN}Flux System Attestation Service (SAS) error detected! ${NC}"
     echo -e "${PIN} ${CYAN}Log file: /var/log/sas.log ${NC}"
-    echo -e "${BOOK}Last error and 10 prior entries for the current boot ${NC}"
+    echo -e "${BOOK} ${CYAN}Last error and 10 prior entries for the current boot ${NC}"
     echo -e "---------------------------------------------------------------------"
     sed -n "${START_LINE},${LAST_LOG_LINE}p" "$LOG_FILE" | pino-pretty --colorize --translateTime 'dd-mm-yyyy HH:MM:ss'
     echo -e ""
