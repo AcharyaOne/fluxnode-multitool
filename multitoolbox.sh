@@ -1039,6 +1039,8 @@ case "$REPLY" in
  ;;
  9)
     if [[ -n $FLUXOS_VERSION ]]; then
+      clear
+      sleep 1
       echo -e "${GREEN}Module: Hardware benchmark${NC}"
       echo -e "${YELLOW}================================================================${NC}"
       if [[ -n $FLUXOS_VERSION ]]; then
