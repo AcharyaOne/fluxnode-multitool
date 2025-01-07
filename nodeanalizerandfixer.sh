@@ -199,7 +199,7 @@ if [[ -n $FLUXOS_VERSION ]]; then
   fi
   echo -e "${NC}"
   BOOT_ID=$(sudo cat /proc/sys/kernel/random/boot_id)
-  $LOG_FILE="/var/log/sas.log"
+  LOG_FILE="/var/log/sas.log"
   LAST_LOG_LINE=$(grep -n "\"boot_id\":\"$BOOT_ID\"" "$LOG_FILE" | grep -E '"level":[5-9][0-9]' | tail -n 1 | cut -d: -f1)
   if [[ -n "$LAST_LOG_LINE" ]]; then
     START_LINE=$((LAST_LOG_LINE - 10))
