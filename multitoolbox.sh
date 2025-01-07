@@ -1043,11 +1043,7 @@ case "$REPLY" in
       sleep 1
       echo -e "${GREEN}Module: Hardware benchmark${NC}"
       echo -e "${YELLOW}================================================================${NC}"
-      if [[ -n $FLUXOS_VERSION ]]; then
-        bash -i "/usr/lib/multitoolbox/hardwarebench.sh"
-      else
-        bash -i <(curl -s https://raw.githubusercontent.com/RunOnFlux/fluxnode-multitool/$ROOT_BRANCH/hardwarebench.sh)
-      fi
+      bash -i "/usr/lib/multitoolbox/hardwarebench.sh"
     else
       clear
       sleep 1
