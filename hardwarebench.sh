@@ -91,13 +91,13 @@ else
  cumulus_ram=7
 fi
 
-if [[ "$ram" -ge  "$cumulus_ram" ]] && [[ "$core" -ge  2 ]] && [[ "$vcore" -ge 4 ]]; then
+if [[ "$ram" -ge  "$cumulus_ram" ]] && [[ "$vcore" -ge 4 ]]; then
   status="CUMULUS"
 fi
-if [[ "$ram" -ge  30 ]] && [[ "$core" -ge  4 ]] && [[ "$vcore" -ge 8 ]]; then
+if [[ "$ram" -ge  30 ]] && [[ "$vcore" -ge 8 ]]; then
   status="NIMBUS"
 fi
-if [[ "$ram" -ge  61 ]] && [[ "$core" -ge 8 ]]  && [[ "$vcore" -ge 16 ]]; then
+if [[ "$ram" -ge  61 ]] && [[ "$vcore" -ge 16 ]]; then
   status="STRATUS"
 fi
 if [[ "$status" == "" ]]; then
@@ -107,13 +107,13 @@ fi
 
 echo -e "| CPU vcores: ${CYAN}${vcore}${NC}"
 
-if [[ "$ram" -ge  "$cumulus_ram" ]] && [[ "$core" -ge  2 ]] && [[ "$vcore" -ge 4 ]]; then
+if [[ "$ram" -ge  "$cumulus_ram" ]]  && [[ "$vcore" -ge 4 ]]; then
   status="CUMULUS"
 fi
-if [[ "$ram" -ge  30 ]] && [[ "$core" -ge  4 ]] && [[ "$vcore" -ge 8 ]]; then
+if [[ "$ram" -ge  30 ]] && [[ "$vcore" -ge 8 ]]; then
   status="NIMBUS"
 fi
-if [[ "$ram" -ge  61 ]] && [[ "$core" -ge 8 ]]  && [[ "$vcore" -ge 16 ]]; then
+if [[ "$ram" -ge  61 ]] && [[ "$vcore" -ge 16 ]]; then
   status="STRATUS"
 fi
 if [[ "$status" == "" ]]; then
@@ -122,7 +122,7 @@ fi
 
 if [[ -n $FLUXOS_VERSION ]]; then 
   outputdiskbench="Disk Bench:";
-  mount_size=$(LC_ALL=C lsblk -l -b -n | grep 'crypt' | awk '{ if ($7 == "/dat") printf("%.2f\n", $4/(1024*1024*1024))}')
+  mount_size=$(sudo lvs --units g --nosuffix --noheadings -o lv_size,vg_name | awk '/vg_flux/ {sum += $1} END {print sum}')
   device_name=$(LC_ALL=C lsblk -l -b -n | grep 'crypt' | grep '/dat' | awk {'printf("%s\n", $1)'})
   if [[ "$mount_size" != "" ]]; then
      mount_path="/dat"
