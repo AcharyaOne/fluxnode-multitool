@@ -1910,6 +1910,9 @@ function download_and_unpack() {
         SECONDS=$((ELAPSED_TIME % 60))
         # Print completion message with formatted time
         echo -e "${ARROW} ${CYAN}Download and extraction completed in ${GREEN}${HOURS}h ${MINUTES}m ${SECONDS}s${NC}"
+        if [[ -n $FLUXOS_VERSION ]]; then
+          sudo chown -R fluxd:fluxd $FLUX_DAEMON_PATH  > /dev/null 2>&1
+        fi
     else
         echo -e "❌ Error: Download or extraction failed."
         clean
