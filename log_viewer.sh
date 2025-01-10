@@ -20,7 +20,7 @@ FILES+=(
     [MongoDB]="/dat/var/log/mongodb/mongod.log"
 )
 
-# Cleanup function
+# Cleanup function to kill the tmux session and its panes
 function at_exit() {
     $TMUX kill-session -t "$SESSION" >/dev/null 2>&1
     set -o history
@@ -35,8 +35,6 @@ for title in "${!FILES[@]}"; do
     LOG_FILE="${FILES[$title]}"
     if [ -f "$LOG_FILE" ]; then
         MENU_OPTIONS+=("$title" "                  " ON)
-    else
-        echo "Skipping ${title}: File not found (${LOG_FILE})"
     fi
 done
 
@@ -73,15 +71,17 @@ fi
 $TMUX set-option -t "$SESSION" -q mouse on
 $TMUX set-option -t "$SESSION" -ga terminal-overrides ',xterm*:smcup@:rmcup@'
 
-# Create panes for each selected file
+# Create panes for each selected file dynamically
+PANE_COUNT=0
 for title in "${SELECTED_FILES[@]}"; do
     LOG_FILE="${FILES[$title]}"
     echo "Opening pane for: $title ($LOG_FILE)"
-    if sudo jq empty ${LOG_FILE} > /dev/null 2>&1; then
-       $TMUX split-window -t "$SESSION" "printf '\033]2;%s\033\\' '${title}' ; sudo tail -F '${LOG_FILE}' | pino-pretty --colorize --translateTime 'dd-mm-yyyy HH:MM:ss'"
+    if sudo jq empty "$LOG_FILE" > /dev/null 2>&1; then
+        $TMUX split-window -t "$SESSION" "printf '\033]2;%s\033\\' '${title}' ; sudo tail -F '${LOG_FILE}' | pino-pretty --colorize --translateTime 'dd-mm-yyyy HH:MM:ss'"
     else
-      $TMUX split-window -t "$SESSION" "printf '\033]2;%s\033\\' '${title}' ; sudo tail -F '${LOG_FILE}'"
+        $TMUX split-window -t "$SESSION" "printf '\033]2;%s\033\\' '${title}' ; sudo tail -F '${LOG_FILE}'"
     fi
+    PANE_COUNT=$((PANE_COUNT + 1))
     $TMUX select-layout -t "$SESSION" "$LAYOUT"
 done
 
@@ -98,7 +98,7 @@ $TMUX set-window-option -t "$SESSION" -g window-status-current-style fg=brightre
 
 # Synchronize panes for uniform control
 $TMUX set-window-option -t "$SESSION" synchronize-panes on
-$TMUX set-option -t "$SESSION" pane-border-status bottom
+$TMUX set-option -t "$SESSION" pane-border-status top
 
 # Attach to the tmux session
 $TMUX attach -t "$SESSION" >/dev/null 2>&1
