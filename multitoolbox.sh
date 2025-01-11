@@ -6,7 +6,7 @@ if ! [[ -z $1 ]]; then
 	if [[ $BRANCH_ALREADY_REFERENCED != '1' ]]; then
 	export ROOT_BRANCH="$1"
 	export BRANCH_ALREADY_REFERENCED='1'
-  if [[ -n "/usr/lib/multitoolbox/multitoolbox.sh" ]]; then
+  if [[ -f "/usr/lib/multitoolbox/multitoolbox.sh" ]]; then
     bash -i "/usr/lib/multitoolbox/multitoolbox.sh"
   else
     bash -i <(curl -s "https://raw.githubusercontent.com/RunOnFlux/fluxnode-multitool/$ROOT_BRANCH/multitoolbox.sh") $ROOT_BRANCH $2
