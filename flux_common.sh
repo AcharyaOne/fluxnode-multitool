@@ -2757,7 +2757,7 @@ function log_rotate() {
 }
 #### UPnP
 function upnp_enable() {
-  if [[ -d $FLUX_BENCH_PATH ]]; then
+  if [[ -d $FLUX_BENCH_PATH  && $FLUXOS_VERSION == "" ]]; then
     sudo chown -R $USER:$USER $FLUX_BENCH_PATH > /dev/null 2>&1
   fi
 	try="0"
@@ -2768,29 +2768,46 @@ function upnp_enable() {
 		echo -e ""
 		return
 	fi
-	while true
-	do
-		echo -e "${ARROW}${CYAN} Checking port validation.....${NC}"
-		# Check if upnp_port is set
-		if [[ -z "$upnp_port" ]]; then
-			FLUX_PORT=$(whiptail --inputbox "Enter your FluxOS port (Ports allowed are: 16127, 16137, 16147, 16157, 16167, 16177, 16187, 16197)" 8 80 3>&1 1>&2 2>&3)
-		else
-			FLUX_PORT="$upnp_port"
-		fi
-		if [[ $FLUX_PORT == "16127" || $FLUX_PORT == "16137" || $FLUX_PORT == "16147" || $FLUX_PORT == "16157" || $FLUX_PORT == "16167" || $FLUX_PORT == "16177" || $FLUX_PORT == "16187" || $FLUX_PORT == "16197" ]]; then
-			string_limit_check_mark "Port is valid..........................................."
-			break
-		else
-			string_limit_x_mark "Port $FLUX_PORT is not allowed..............................."
-			sleep 1
-			try=$(($try+1))
-			if [[ "$try" -gt "3" ]]; then
-				echo -e "${WORNING} ${CYAN}You have reached the maximum number of attempts...${NC}" 
-				echo -e ""
-				exit
-			fi
-		fi
-	done
+	if [[ -z "$upnp_port" ]]; then
+    candidate_ports=(16127 16137 16147 16157 16167 16177 16187 16197)
+    current_mappings=$(upnpc -l 2>/dev/null)
+    used_ports=()
+    while IFS= read -r line; do
+        if echo "$line" | grep -qE "TCP[[:space:]]([0-9]+)->.*'Flux_Backend_API'"; then
+            if ! echo "$line" | grep -q "Flux_Backend_API_SSL"; then
+                port=$(echo "$line" | grep -oE "TCP[[:space:]]([0-9]+)" | awk '{print $2}')
+                used_ports+=("$port")
+            fi
+        fi
+    done <<< "$current_mappings"
+    
+    available_ports=()
+    for port in "${candidate_ports[@]}"; do
+        if [[ ! " ${used_ports[*]} " =~ " $port " ]]; then
+            available_ports+=("$port")
+        fi
+    done
+    
+    if [ ${#available_ports[@]} -eq 0 ]; then
+        whiptail --title "Error" --msgbox "No free ports are available." 8 50
+        exit
+    fi
+    radio_list=()
+    for port in "${available_ports[@]}"; do
+        radio_list+=("$port" "" OFF)
+    done
+    
+    FLUX_PORT=$(whiptail --title "Select Your FluxOS UPnP Port" --radiolist \
+    "Use the UP/DOWN arrows to highlight the port. Press Spacebar to select, THEN press ENTER." 17 50 8 \
+    "${radio_list[@]}" 3>&1 1>&2 2>&3)
+    
+    if [ $? -ne 0 ]; then
+        exit 
+    fi
+	else
+		FLUX_PORT="$upnp_port"
+	fi
+
 	config_builder "apiport" "$FLUX_PORT" "MultiPort Mode" "fluxos"
 	if [[ ! -d $FLUX_BENCH_PATH ]]; then
 		sudo mkdir -p $FLUX_BENCH_PATH 2>/dev/null
@@ -2875,7 +2892,7 @@ function upnp_enable() {
       sudo systemctl restart fluxd  > /dev/null 2>&1
       sudo systemctl restart fluxos  > /dev/null 2>&1
     fi
-		sleep 150
+		sleep 180
 		echo -e "${ARROW}${CYAN} Checking FluxOS logs... ${NC}"
     if [[ -n $FLUXOS_VERSION ]]; then
 		  error_check=$(sudo journalctl -u fluxos.service -b -n 25 | grep "Deactivated successfully")

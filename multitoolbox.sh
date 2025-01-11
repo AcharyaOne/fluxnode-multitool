@@ -6,7 +6,7 @@ if ! [[ -z $1 ]]; then
 	if [[ $BRANCH_ALREADY_REFERENCED != '1' ]]; then
 	export ROOT_BRANCH="$1"
 	export BRANCH_ALREADY_REFERENCED='1'
-  if [[ -n "/usr/lib/multitoolbox/multitoolbox.sh" ]]; then
+  if [[ -f "/usr/lib/multitoolbox/multitoolbox.sh" ]]; then
     bash -i "/usr/lib/multitoolbox/multitoolbox.sh"
   else
     bash -i <(curl -s "https://raw.githubusercontent.com/RunOnFlux/fluxnode-multitool/$ROOT_BRANCH/multitoolbox.sh") $ROOT_BRANCH $2
@@ -889,12 +889,12 @@ if ! gzip -V > /dev/null 2>&1; then
 	sudo apt-get install -y gzip > /dev/null 2>&1
 fi
 
-if ! zip -v > /dev/null 2>&1; then
-	sudo apt-get install -y zip > /dev/null 2>&1
-fi
-
 if ! whiptail -v > /dev/null 2>&1; then
 	sudo apt-get install -y whiptail > /dev/null 2>&1
+fi
+
+if ! upnpc -h > /dev/null 2>&1 ; then
+	sudo apt install -y miniupnpc > /dev/null 2>&1 && sleep 2
 fi
 
 if [[ $(cat /etc/bash.bashrc | grep 'multitoolbox' | wc -l) == "0"  && $FLUXOS_VERSION == "" ]]; then
