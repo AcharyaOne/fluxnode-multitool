@@ -897,6 +897,10 @@ if ! whiptail -v > /dev/null 2>&1; then
 	sudo apt-get install -y whiptail > /dev/null 2>&1
 fi
 
+if ! upnpc -h > /dev/null 2>&1 ; then
+	sudo apt install -y miniupnpc > /dev/null 2>&1 && sleep 2
+fi
+
 if [[ $(cat /etc/bash.bashrc | grep 'multitoolbox' | wc -l) == "0"  && $FLUXOS_VERSION == "" ]]; then
 	echo "alias multitoolbox='bash -i <(curl -s https://raw.githubusercontent.com/RunOnFlux/fluxnode-multitool/master/multitoolbox.sh)'" | sudo tee -a /etc/bash.bashrc
 	echo "alias multitoolbox_testnet='bash -i <(curl -s https://raw.githubusercontent.com/RunOnFlux/fluxnode-multitool/master/multitoolbox_testnet.sh)'" | sudo tee -a /etc/bash.bashrc
