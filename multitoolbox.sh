@@ -889,10 +889,6 @@ if ! gzip -V > /dev/null 2>&1; then
 	sudo apt-get install -y gzip > /dev/null 2>&1
 fi
 
-if ! zip -v > /dev/null 2>&1; then
-	sudo apt-get install -y zip > /dev/null 2>&1
-fi
-
 if ! whiptail -v > /dev/null 2>&1; then
 	sudo apt-get install -y whiptail > /dev/null 2>&1
 fi
