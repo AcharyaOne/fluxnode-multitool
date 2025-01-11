@@ -1929,9 +1929,6 @@ function bootstrap_new() {
  	if ! pigz --version > /dev/null 2>&1 ; then
 		sudo apt install -y pigz > /dev/null 2>&1 && sleep 2
 	fi
-  if ! upnpc -h > /dev/null 2>&1 ; then
-		sudo apt install -y miniupnpc > /dev/null 2>&1 && sleep 2
-	fi
 	if ! wget --version > /dev/null 2>&1 ; then
 		echo -e "${WORNING} ${CYAN}Wget not installed, operation aborted.. ${NC}" && sleep 1
 		echo -e ""
