@@ -2892,7 +2892,7 @@ function upnp_enable() {
       sudo systemctl restart fluxd  > /dev/null 2>&1
       sudo systemctl restart fluxos  > /dev/null 2>&1
     fi
-		sleep 150
+		sleep 180
 		echo -e "${ARROW}${CYAN} Checking FluxOS logs... ${NC}"
     if [[ -n $FLUXOS_VERSION ]]; then
 		  error_check=$(sudo journalctl -u fluxos.service -b -n 25 | grep "Deactivated successfully")
