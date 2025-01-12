@@ -2771,37 +2771,37 @@ function upnp_enable() {
 	if [[ -z "$upnp_port" ]]; then
     candidate_ports=(16127 16137 16147 16157 16167 16177 16187 16197)
     current_mappings=$(upnpc -l 2>/dev/null)
+    local_ip=$(echo "$current_mappings" | grep -oP 'Local LAN ip address : \K[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+')
     used_ports=()
+    used_ports_by_host=()
+    
     while IFS= read -r line; do
-        if echo "$line" | grep -qE "TCP[[:space:]]([0-9]+)->.*'Flux_Backend_API'"; then
-            if ! echo "$line" | grep -q "Flux_Backend_API_SSL"; then
-                port=$(echo "$line" | grep -oE "TCP[[:space:]]([0-9]+)" | awk '{print $2}')
-                used_ports+=("$port")
+        if echo "$line" | grep -q "TCP "; then
+            port=$(echo "$line" | sed -n 's/.*TCP \([0-9]\+\)->.*/\1/p')
+            host=$(echo "$line" | sed -n 's/.*->\([0-9\.]\+\):.*/\1/p')
+            used_ports+=("$port")
+            if [[ "$host" == "$local_ip" ]]; then
+                used_ports_by_host+=("$port")
             fi
         fi
     done <<< "$current_mappings"
     
-    available_ports=()
-    for port in "${candidate_ports[@]}"; do
-        if [[ ! " ${used_ports[*]} " =~ " $port " ]]; then
-            available_ports+=("$port")
-        fi
-    done
-    
-    if [ ${#available_ports[@]} -eq 0 ]; then
-        whiptail --title "Error" --msgbox "No free ports are available." 8 50
-        exit
-    fi
     radio_list=()
-    for port in "${available_ports[@]}"; do
-        radio_list+=("$port" "" OFF)
+    for port in "${candidate_ports[@]}"; do
+        if [[ " ${used_ports_by_host[*]} " =~ " $port " ]]; then
+            radio_list+=("$port" "(In Use by Host)        " ON)
+        elif [[ " ${used_ports[*]} " =~ " $port " ]]; then
+            radio_list+=("$port" "(In Use)                " OFF)
+        else
+            radio_list+=("$port" "(Available)             " OFF)
+        fi
     done
     
     FLUX_PORT=$(whiptail --title "Select Your FluxOS UPnP Port" --radiolist \
     "Use the UP/DOWN arrows to highlight the port. Press Spacebar to select, THEN press ENTER." 17 50 8 \
     "${radio_list[@]}" 3>&1 1>&2 2>&3)
     
-    if [ $? -ne 0 ]; then
+    if [[ $? -ne 0 || -z $FLUX_PORT ]]; then
         exit 
     fi
 	else
