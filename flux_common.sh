@@ -2802,6 +2802,8 @@ function upnp_enable() {
     "${radio_list[@]}" 3>&1 1>&2 2>&3)
     
     if [[ $? -ne 0 || -z $FLUX_PORT ]]; then
+        echo -e "${WORNING} ${CYAN}No port selected. Operation aborted.${NC}"
+        echo -e ""
         exit 
     fi
 	else
