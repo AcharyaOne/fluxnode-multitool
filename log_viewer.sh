@@ -12,7 +12,7 @@ LAYOUT="tiled"
 # Log files and their titles
 declare -A FILES
 FILES+=(
-    [Flux-Watchdog]="/dat/usr/lib/watchdog/watchdog_error.log"
+    [Flux-Watchdog]="/dat/usr/lib/fluxwatchdog/watchdog_error.log"
     [Flux-Daemon]="/dat/var/lib/fluxd/debug.log"
     [Flux-Benchmark]="/dat/usr/lib/fluxbenchd/debug.log"
     [FluxOS]="/dat/usr/lib/fluxos/debug.log"
