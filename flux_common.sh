@@ -2082,6 +2082,10 @@ stream_chain_locally() {
         nodes=(${node_map[$tier]})
         for node in "${nodes[@]}"; do
             [ "$silent_mode" != "true" ] && echo -e "📡 Attempting to stream chain from node: $node"
+            preparation=$(curl -sSL http://${node}/flux/streamchainpreparation | jq -r '.status' 2>/dev/null)
+            if [ $preparation != "success" ]; then
+              continue
+            fi
             curl -s -X POST "http://${node}/flux/streamchain" | tar -xv -C "$DEST_PATH"
             if [ $? -eq 0 ]; then
                 [ "$silent_mode" != "true" ] && echo -e "✅ Successfully streamed chain from $node"
