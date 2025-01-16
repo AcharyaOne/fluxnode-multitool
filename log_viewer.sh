@@ -18,6 +18,7 @@ FILES+=(
     [FluxOS]="/dat/usr/lib/fluxos/debug.log"
     [SAS]="/var/log/sas.log"
     [MongoDB]="/dat/var/log/mongodb/mongod.log"
+    [Syncthing]="/dat/var/log/syncthing.log"
 )
 
 # Cleanup function to kill the tmux session and its panes
