@@ -79,9 +79,9 @@ fi
 
 ##### CONFIGS SECTION ######################################
 function watchdog_conf_create(){
-	sudo touch $WATCHDOG_PATH/config.js
-	sudo chown $USER:$USER $WATCHDOG_PATH/config.js
-	cat <<- EOF >|  $WATCHDOG_PATH/config.js
+	sudo touch $FLUX_WATCHDOG_PATH/config.js
+	sudo chown $USER:$USER $FLUX_WATCHDOG_PATH/config.js
+	cat <<- EOF >|  $FLUX_WATCHDOG_PATH/config.js
   module.exports = {
 	  label: '${node_label}',
 	  tier_eps_min: '${eps_limit}',
