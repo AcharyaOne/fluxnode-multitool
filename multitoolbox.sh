@@ -956,10 +956,9 @@ else
   echo -e "${CYAN}3 - FluxOS Config Management${NC}"
   echo -e "${CYAN}4 - Restore Flux blockchain from bootstrap${NC}"
   echo -e "${CYAN}5 - MongoDB Repair Assistant${NC}"
-  echo -e "${CYAN}6 - Multinode configuration with UPNP communication (Needs Router with UPNP support)${NC}"
-  echo -e "${CYAN}7 - FluxNode Diagnostics${NC}"
-  echo -e "${CYAN}8 - Log Viewer${NC}"
-  echo -e "${CYAN}9 - Hardware benchmark${NC}"
+  echo -e "${CYAN}6 - FluxNode Diagnostics${NC}"
+  echo -e "${CYAN}7 - Log Viewer${NC}"
+  echo -e "${CYAN}8 - Hardware benchmark${NC}"
   echo -e "${YELLOW}================================================================${NC}"
 fi
 read -rp "Pick an option and hit ENTER: "
@@ -1015,7 +1014,7 @@ case "$REPLY" in
     if [[ -z $FLUXOS_VERSION ]]; then
 		  create_config
     else
-      multinode
+      analyzer_and_fixer
     fi
  ;;
 	7)
@@ -1024,8 +1023,7 @@ case "$REPLY" in
     if [[ -z $FLUXOS_VERSION ]]; then
       install_flux
     else
-      analyzer_and_fixer
-	    echo -e ""
+      bash -i "/usr/lib/multitoolbox/log_viewer.sh"
     fi
  ;;
  8)
@@ -1034,32 +1032,29 @@ case "$REPLY" in
     if [[ -z $FLUXOS_VERSION ]]; then
       daemon_reconfiguration
     else
-      bash -i "/usr/lib/multitoolbox/log_viewer.sh"
-    fi
- ;;
- 9)
-    if [[ -n $FLUXOS_VERSION ]]; then
-      clear
-      sleep 1
       echo -e "${GREEN}Module: Hardware benchmark${NC}"
       echo -e "${YELLOW}================================================================${NC}"
       bash -i "/usr/lib/multitoolbox/hardwarebench.sh"
-    else
-      clear
-      sleep 1
-      echo -e "${GREEN}Module: Flux Daemon service creator${NC}"
+    fi
+ ;;
+ 9)
+    if [[ ! -z $FLUXOS_VERSION ]]; then
+      exit
+    fi
+    clear
+    sleep 1
+    echo -e "${GREEN}Module: Flux Daemon service creator${NC}"
+    echo -e "${YELLOW}================================================================${NC}"
+    if [[ "$USER" == "root" || "$USER" == "ubuntu" || "$USER" == "admin" ]]; then
+      echo -e "${CYAN}You are currently logged in as ${GREEN}$USER${NC}"
+      echo -e "${CYAN}Please switch to the user account.${NC}"
       echo -e "${YELLOW}================================================================${NC}"
-      if [[ "$USER" == "root" || "$USER" == "ubuntu" || "$USER" == "admin" ]]; then
-        echo -e "${CYAN}You are currently logged in as ${GREEN}$USER${NC}"
-        echo -e "${CYAN}Please switch to the user account.${NC}"
-        echo -e "${YELLOW}================================================================${NC}"
-        echo -e "${NC}"
-        exit
-      fi 
-      create_service_scripts
-      create_service "install"
-      echo -e ""
-    fi  
+      echo -e "${NC}"
+      exit
+    fi 
+    create_service_scripts
+    create_service "install"
+    echo -e ""
 	;;
 	10)
     if [[ ! -z $FLUXOS_VERSION ]]; then
