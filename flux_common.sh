@@ -1236,7 +1236,7 @@ function string_limit_check_mark() {
 	echo -e "${ARROW} ${CYAN}$string[${CHECK_MARK}${CYAN}]${NC}"
 }
 function integration_check() {
-	FILE_ARRAY=( 'fluxbench-cli' 'fluxbenchd' 'flux-cli' 'fluxd' 'fetch-params.sh' 'flux-tx' )
+	FILE_ARRAY=( 'fluxbench-cli' 'fluxbenchd' 'flux-cli' 'fluxd' 'flux-fetch-params' 'flux-tx' )
 	ELEMENTS=${#FILE_ARRAY[@]}
 	for (( i=0;i<$ELEMENTS;i++)); do
 		string="${FILE_ARRAY[${i}]}......................................"
@@ -2584,7 +2584,7 @@ function finalizing() {
 }
 function zk_params() {
 	echo -e "${ARROW} ${YELLOW}Installing zkSNARK params...${NC}"
-	bash fetch-params.sh > /dev/null 2>&1 && sleep 2
+	bash fetch-params > /dev/null 2>&1 && sleep 2
 	sudo chown -R $USER:$USER /home/$USER  > /dev/null 2>&1
 }
 function flux_package() {
