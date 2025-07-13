@@ -2584,7 +2584,7 @@ function finalizing() {
 }
 function zk_params() {
 	echo -e "${ARROW} ${YELLOW}Installing zkSNARK params...${NC}"
-	bash fetch-params > /dev/null 2>&1 && sleep 2
+	bash flux-fetch-params > /dev/null 2>&1 && sleep 2
 	sudo chown -R $USER:$USER /home/$USER  > /dev/null 2>&1
 }
 function flux_package() {
