@@ -68,7 +68,6 @@ function config_file() {
     outpoint=$(cat $DATA_PATH/install_conf.json | jq -r '.outpoint')
     index=$(cat $DATA_PATH/install_conf.json | jq -r '.index')
     zel_id=$(cat $DATA_PATH/install_conf.json | jq -r '.zelid')
-    kda_address=$(cat $DATA_PATH/install_conf.json | jq -r '.kda_address')
     upnp_port=$(cat $DATA_PATH/install_conf.json | jq -r '.upnp_port')
     gateway_ip=$(cat $DATA_PATH/install_conf.json | jq -r '.gateway_ip')
     upnp_enabled=$(cat $DATA_PATH/install_conf.json | jq -r '.upnp_enabled')
@@ -826,7 +825,7 @@ function node_reconfiguration() {
 		import_config_file "silent"
 		get_ip
 		if [[ -d $FLUXOS_PATH ]]; then	  
-			if [[ "$KDA_A" != "" && "$ZELID" != "" ]]; then
+			if [[ "$ZELID" != "" ]]; then
 				echo -e "${ARROW} ${CYAN}Creating FluxOS config file...${NC}"
 				sudo rm -rf $FLUXOS_PATH/config/userconfig.js > /dev/null 2>&1
 				fluxos_conf_create
