@@ -117,7 +117,6 @@ module.exports = {
   initial: {
     ipaddress: '${WANIP}',
     zelid: '${ZELID}',
-    kadena: '${KDA_A}',
     development: false,
     blockedPorts: [],
     testnet: $testnet,
@@ -190,7 +189,6 @@ function install_conf_create(){
 	  "outpoint": "${outpoint}",
 	  "index": "${index}",
 	  "zelid": "${zel_id}",
-	  "kda_address": "${kda_address}",
 	  "firewall_disable": "${firewall_disable}",
 	  "bootstrap_url": "${bootstrap_url}",
 	  "bootstrap_zip_del": "${bootstrap_zip_del}",
@@ -611,7 +609,6 @@ function smart_reconfiguration(){
   "outpoint": [{"key": "zelnodeoutpoint", "label": "Collateral TX ID"}],
   "index": [{"key": "zelnodeindex", "label": "Output Index"}],
   "node_label": [{"key": "label", "label": "Node Label"}],
-  "kda_address": [{"key": "kadena", "label": "Kadena Address"}],
   "ping": [{"key": "ping", "label": "Discord Nick Ping"}],
   "zelflux_update": [{"key": "zelflux_update", "label": "FluxOS Auto Update"}],
   "zelcash_update": [{"key": "zelcash_update", "label": "Daemon Auto Update"}],
@@ -723,11 +720,6 @@ function config_smart_create() {
     if [[ "$ZELID" != "" ]]; then
       echo -e "${PIN}${CYAN} Flux/SSP ID = ${GREEN}$ZELID${NC}"
       smart_install_conf "zelid" "$ZELID" "$1"
-    fi
-    KDA_A=$(grep -w kadena $FLUXOS_PATH/config/userconfig.js | sed -e 's/.*kadena: .//' | sed -e 's/.\{2\}$//')
-    if [[ "$KDA_A" != "" ]]; then
-      echo -e "${PIN}${CYAN} KDA address = ${GREEN}$KDA_A${NC}"
-      smart_install_conf "kda_address" "$KDA_A" "$1"
     fi
     upnp_port=$(grep -w apiport $FLUXOS_PATH/config/userconfig.js | grep -o '[[:digit:]]*')
     if [[ "$upnp_port" != "" ]]; then
@@ -857,7 +849,6 @@ function manual_build(){
 		outpoint=""
 		index=""
 		zelid=""
-		kda_address=""
 		node_label="0" 
 		fix_action="1"      
 		eps_limit="0"
@@ -882,21 +873,6 @@ function manual_build(){
 			else
 				echo -e "${ARROW} ${CYAN}Zel ID is not valid try again...........[${X_MARK}${CYAN}]${NC}"
 				sleep 4
-			fi
-		done
-		sleep 1
-		while true
-		do
-			KDA_A=$(whiptail --inputbox "Please enter your Kadena address from Zelcore" 8 85 3>&1 1>&2 2>&3)
-			KDA_A=$(grep -Eo "^k:[0-9a-z]{64}\b" <<< "$KDA_A")
-			if [[ "$KDA_A" != "" && "$KDA_A" != *kadena* && "$KDA_A" = *k:*  ]]; then    
-				echo -e "${ARROW} ${CYAN}Kadena address is valid.................[${CHECK_MARK}${CYAN}]${NC}"	
-				kda_address="kadena:$KDA_A?chainid=0"		    
-				sleep 2
-				break
-			else	     
-				echo -e "${ARROW} ${CYAN}Kadena address is not valid.............[${X_MARK}${CYAN}]${NC}"
-				sleep 2		     
 			fi
 		done
 		sleep 1
@@ -1337,7 +1313,6 @@ function import_config_file() {
 		index=$(cat $DATA_PATH/install_conf.json | jq -r '.index')
 		#FluxOS
 		ZELID=$(cat $DATA_PATH/install_conf.json | jq -r '.zelid')
-		KDA_A=$(cat $DATA_PATH/install_conf.json | jq -r '.kda_address')
 		#Benchmark
 		thunder=$(cat $DATA_PATH/install_conf.json | jq -r '.thunder')
 		#WatchDog
@@ -1628,29 +1603,6 @@ function daemon_reconfiguration(){
 	MSG2="${CYAN}........................[${CHECK_MARK}${CYAN}]${NC}"
 	spinning_timer
 	echo -e "" && echo -e ""
-}
-function replace_kadena {
-  if [[ -z "$KDA_A"  ]]; then
-		while true
-		do
-			KDA_A=$(whiptail --inputbox "Please enter your Kadena address from Zelcore" 8 85 3>&1 1>&2 2>&3)
-			KDA_A=$(grep -Eo "^k:[0-9a-z]{64}\b" <<< "$KDA_A")
-			if [[ "$KDA_A" != "" && "$KDA_A" != *kadena* && "$KDA_A" = *k:*  ]]; then    
-				echo -e "${ARROW} ${CYAN}Kadena address is valid.................[${CHECK_MARK}${CYAN}]${NC}"				    
-				sleep 2
-				break
-			else	     
-				echo -e "${ARROW} ${CYAN}Kadena address is not valid.............[${X_MARK}${CYAN}]${NC}"
-				sleep 2		     
-			fi
-		done
-	fi	
-	kda_address="kadena:$KDA_A?chainid=0"
-	if [[ $(cat $FLUXOS_PATH/config/userconfig.js | grep "kadena") != "" ]]; then
-    config_builder "kadena" "$kda_address" "Kadena address" "fluxos"
-		##insertAfter "/home/$USER/zelflux/config/userconfig.js" "zelid" "    kadena: '$kda_address',"
-		##echo -e "${ARROW} ${CYAN}Kadena address set successfully........................[${CHECK_MARK}${CYAN}]${NC}"
-	fi
 }
 function replace_zelid() {
 	while true
@@ -2434,9 +2386,6 @@ function start_install() {
 			echo -e "${PIN}${CYAN} Output Index = ${GREEN}$zelnodeindex${NC}" && sleep 1
 			if [[ "$ZELID" != "" ]]; then
 				echo -e "${PIN}${CYAN} Zel ID = ${GREEN}$ZELID${NC}" && sleep 1
-			fi
-			if [[ "$KDA_A" != "" ]]; then
-				echo -e "${PIN}${CYAN} KDA address = ${GREEN}$KDA_A${NC}" && sleep 1
 			fi
 			echo -e ""
 			echo -e "${ARROW} ${YELLOW}Watchdog conf settings:${NC}"
