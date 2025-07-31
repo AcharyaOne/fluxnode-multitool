@@ -406,20 +406,7 @@ function create_conf() {
 				echo -e "${ARROW} ${CYAN}Zel ID is not valid try again...........[${X_MARK}${CYAN}]${NC}"
 				sleep 4
 			fi
-		done
-		while true
-		do
-			KDA_A=$(whiptail --inputbox "Node tier eligible to receive KDA rewards, what's your KDA address? Nothing else will be required on FluxOS regarding KDA." 8 85 3>&1 1>&2 2>&3)
-			if [[ "$KDA_A" != "" && "$KDA_A" != *kadena* && "$KDA_A" = *k:*  ]]; then    
-				echo -e "${ARROW} ${CYAN}Kadena address is valid.................[${CHECK_MARK}${CYAN}]${NC}"	
-				KDA_A="kadena:$KDA_A?chainid=0"			    
-				sleep 2
-				break
-			else	     
-				echo -e "${ARROW} ${CYAN}Kadena address is not valid.............[${X_MARK}${CYAN}]${NC}"
-				sleep 2		     
-			fi
-		done	                 
+		done                 
 	fi      
 }
 function install_daemon() {
