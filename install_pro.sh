@@ -415,57 +415,65 @@ function install_daemon() {
    echo -e "${ARROW} ${YELLOW}Configuring daemon repository and importing public GPG Key${NC}" 
    sudo chown -R $USER:$USER /usr/share/keyrings > /dev/null 2>&1
    sudo chown -R $USER:$USER /home/$USER/.gnupg > /dev/null 2>&1
-	if [[ "$(lsb_release -cs)" == "xenial" ]]; then
-		echo 'deb https://apt.runonflux.io/ '$(lsb_release -cs)' main' | sudo tee /etc/apt/sources.list.d/flux.list > /dev/null 2>&1
-		gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv 4B69CA27A986265D > /dev/null 2>&1
-		gpg --export 4B69CA27A986265D | sudo apt-key add - > /dev/null 2>&1    
-		if ! gpg --list-keys Zel > /dev/null; then    
-			gpg --keyserver hkp://keys.gnupg.net:80 --recv-keys 4B69CA27A986265D > /dev/null 2>&1
-			gpg --export 4B69CA27A986265D | sudo apt-key add - > /dev/null 2>&1   
-		fi 
-		flux_package && sleep 2    
-	else
-		sudo rm /usr/share/keyrings/flux-archive-keyring.gpg > /dev/null 2>&1
+   
+   # *** NEW: Detect distro and map trixie to noble for compatibility ***
+   DISTRO=$(lsb_release -cs)
+   case $DISTRO in
+       trixie) DISTRO=noble ;;
+       # Add more mappings if needed, e.g., for future unsupported distros
+   esac
+   
+    if [[ "$DISTRO" == "xenial" ]]; then  # *** CHANGED: Use $DISTRO var here too for consistency ***
+        echo 'deb https://apt.runonflux.io/ '$DISTRO' main' | sudo tee /etc/apt/sources.list.d/flux.list > /dev/null 2>&1
+        gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv 4B69CA27A986265D > /dev/null 2>&1
+        gpg --export 4B69CA27A986265D | sudo apt-key add - > /dev/null 2>&1    
+        if ! gpg --list-keys Zel > /dev/null; then    
+            gpg --keyserver hkp://keys.gnupg.net:80 --recv-keys 4B69CA27A986265D > /dev/null 2>&1
+            gpg --export 4B69CA27A986265D | sudo apt-key add - > /dev/null 2>&1   
+        fi 
+        flux_package && sleep 2    
+    else
+        sudo rm /usr/share/keyrings/flux-archive-keyring.gpg > /dev/null 2>&1
     server_check=$(curl -s -m 20 https://apt.runonflux.io/pool/main/f/flux/ | grep -o '[0-9].[0-9].[0-9]' | head -n1)
     if [[ $server_check == "" ]]; then
-		  echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/flux-archive-keyring.gpg] https://apt.fluxos.network/ focal main" | sudo tee /etc/apt/sources.list.d/flux.list  > /dev/null 2>&1
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/flux-archive-keyring.gpg] https://apt.fluxos.network/ $DISTRO main" | sudo tee /etc/apt/sources.list.d/flux.list  > /dev/null 2>&1  # *** CHANGED: Use $DISTRO instead of focal ***
     else
-      echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/flux-archive-keyring.gpg] https://apt.runonflux.io/ focal main" | sudo tee /etc/apt/sources.list.d/flux.list  > /dev/null 2>&1
+      echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/flux-archive-keyring.gpg] https://apt.runonflux.io/ $DISTRO main" | sudo tee /etc/apt/sources.list.d/flux.list  > /dev/null 2>&1  # *** CHANGED: Use $DISTRO instead of focal ***
     fi
-		# downloading key && save it as keyring  
-		gpg --no-default-keyring --keyring /usr/share/keyrings/flux-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 4B69CA27A986265D > /dev/null 2>&1
-		key_counter=0
-		until [ $key_counter -gt 5 ]
-		do
-			if gpg -k --keyring /usr/share/keyrings/flux-archive-keyring.gpg Zel > /dev/null 2>&1; then
-				break
-			fi
-			echo -e "${CYAN}Retrieve keys failed will try again...${NC}"
-			sleep 5
-			sudo rm /usr/share/keyrings/flux-archive-keyring.gpg > /dev/null 2>&1
-			gpg --no-default-keyring --keyring /usr/share/keyrings/flux-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 4B69CA27A986265D > /dev/null 2>&1
-			((key_counter++))
-		done
-		#if ! gpg -k --keyring /usr/share/keyrings/flux-archive-keyring.gpg Zel > /dev/null 2>&1; then
-			#echo -e "${YELLOW}First attempt to retrieve keys failed will try a different keyserver.${NC}"
-			#sudo rm /usr/share/keyrings/flux-archive-keyring.gpg > /dev/null 2>&1
-			#gpg --no-default-keyring --keyring /usr/share/keyrings/flux-archive-keyring.gpg --keyserver hkp://na.pool.sks-keyservers.net:80 --recv-keys 4B69CA27A986265D > /dev/null 2>&1
-		#fi
-		#if ! gpg -k --keyring /usr/share/keyrings/flux-archive-keyring.gpg Zel > /dev/null 2>&1; then
-			#echo -e "${YELLOW}Last keyserver also failed will try one last keyserver.${NC}"
-			#sudo rm /usr/share/keyrings/flux-archive-keyring.gpg > /dev/null 2>&1
-			#gpg --no-default-keyring --keyring /usr/share/keyrings/flux-archive-keyring.gpg --keyserver hkp://keys.gnupg.net:80 --recv-keys 4B69CA27A986265D > /dev/null 2>&1
-		#fi
-		if gpg -k --keyring /usr/share/keyrings/flux-archive-keyring.gpg Zel > /dev/null 2>&1; then
-			flux_package && sleep 2 
-		else   
-			echo -e ""
-			echo -e "${WORNING} ${RED}Importing public GPG Key failed...${NC}"
-			echo -e "${WORNING} ${CYAN}Installation stopped...${NC}"
-			echo -e ""
-			exit
-		fi
-	fi
+        # downloading key && save it as keyring  
+        gpg --no-default-keyring --keyring /usr/share/keyrings/flux-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 4B69CA27A986265D > /dev/null 2>&1
+        key_counter=0
+        until [ $key_counter -gt 5 ]
+        do
+            if gpg -k --keyring /usr/share/keyrings/flux-archive-keyring.gpg Zel > /dev/null 2>&1; then
+                break
+            fi
+            echo -e "${CYAN}Retrieve keys failed will try again...${NC}"
+            sleep 5
+            sudo rm /usr/share/keyrings/flux-archive-keyring.gpg > /dev/null 2>&1
+            gpg --no-default-keyring --keyring /usr/share/keyrings/flux-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 4B69CA27A986265D > /dev/null 2>&1
+            ((key_counter++))
+        done
+        #if ! gpg -k --keyring /usr/share/keyrings/flux-archive-keyring.gpg Zel > /dev/null 2>&1; then
+            #echo -e "${YELLOW}First attempt to retrieve keys failed will try a different keyserver.${NC}"
+            #sudo rm /usr/share/keyrings/flux-archive-keyring.gpg > /dev/null 2>&1
+            #gpg --no-default-keyring --keyring /usr/share/keyrings/flux-archive-keyring.gpg --keyserver hkp://na.pool.sks-keyservers.net:80 --recv-keys 4B69CA27A986265D > /dev/null 2>&1
+        #fi
+        #if ! gpg -k --keyring /usr/share/keyrings/flux-archive-keyring.gpg Zel > /dev/null 2>&1; then
+            #echo -e "${YELLOW}Last keyserver also failed will try one last keyserver.${NC}"
+            #sudo rm /usr/share/keyrings/flux-archive-keyring.gpg > /dev/null 2>&1
+            #gpg --no-default-keyring --keyring /usr/share/keyrings/flux-archive-keyring.gpg --keyserver hkp://keys.gnupg.net:80 --recv-keys 4B69CA27A986265D > /dev/null 2>&1
+        #fi
+        if gpg -k --keyring /usr/share/keyrings/flux-archive-keyring.gpg Zel > /dev/null 2>&1; then
+            flux_package && sleep 2 
+        else   
+            echo -e ""
+            echo -e "${WORNING} ${RED}Importing public GPG Key failed...${NC}"
+            echo -e "${WORNING} ${CYAN}Installation stopped...${NC}"
+            echo -e ""
+            exit
+        fi
+    fi
 }
 function basic_security() {
 	echo -e "${ARROW} ${YELLOW}Configuring firewall and enabling fail2ban...${NC}"
