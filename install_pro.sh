@@ -415,16 +415,8 @@ function install_daemon() {
    echo -e "${ARROW} ${YELLOW}Configuring daemon repository and importing public GPG Key${NC}" 
    sudo chown -R $USER:$USER /usr/share/keyrings > /dev/null 2>&1
    sudo chown -R $USER:$USER /home/$USER/.gnupg > /dev/null 2>&1
-   
-   # *** NEW: Detect distro and map trixie to noble for compatibility ***
-   DISTRO=$(lsb_release -cs)
-   case $DISTRO in
-       trixie) DISTRO=noble ;;
-       # Add more mappings if needed, e.g., for future unsupported distros
-   esac
-   
-    if [[ "$DISTRO" == "xenial" ]]; then  # *** CHANGED: Use $DISTRO var here too for consistency ***
-        echo 'deb https://apt.runonflux.io/ '$DISTRO' main' | sudo tee /etc/apt/sources.list.d/flux.list > /dev/null 2>&1
+    if [[ "$(lsb_release -cs)" == "xenial" ]]; then
+        echo 'deb https://apt.runonflux.io/ '$(lsb_release -cs)' main' | sudo tee /etc/apt/sources.list.d/flux.list > /dev/null 2>&1
         gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv 4B69CA27A986265D > /dev/null 2>&1
         gpg --export 4B69CA27A986265D | sudo apt-key add - > /dev/null 2>&1    
         if ! gpg --list-keys Zel > /dev/null; then    
@@ -436,12 +428,13 @@ function install_daemon() {
         sudo rm /usr/share/keyrings/flux-archive-keyring.gpg > /dev/null 2>&1
     server_check=$(curl -s -m 20 https://apt.runonflux.io/pool/main/f/flux/ | grep -o '[0-9].[0-9].[0-9]' | head -n1)
     if [[ $server_check == "" ]]; then
-          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/flux-archive-keyring.gpg] https://apt.fluxos.network/ $DISTRO main" | sudo tee /etc/apt/sources.list.d/flux.list  > /dev/null 2>&1  # *** CHANGED: Use $DISTRO instead of focal ***
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/flux-archive-keyring.gpg] https://apt.fluxos.network/ noble main" | sudo tee /etc/apt/sources.list.d/flux.list  > /dev/null 2>&1
     else
-      echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/flux-archive-keyring.gpg] https://apt.runonflux.io/ $DISTRO main" | sudo tee /etc/apt/sources.list.d/flux.list  > /dev/null 2>&1  # *** CHANGED: Use $DISTRO instead of focal ***
+      echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/flux-archive-keyring.gpg] https://apt.runonflux.io/ noble main" | sudo tee /etc/apt/sources.list.d/flux.list  > /dev/null 2>&1
     fi
         # downloading key && save it as keyring  
         gpg --no-default-keyring --keyring /usr/share/keyrings/flux-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 4B69CA27A986265D > /dev/null 2>&1
+        sudo curl -fsSL https://apt.runonflux.io/gpg.key | sudo gpg --dearmor -o /usr/share/keyrings/flux-archive-keyring.gpg
         key_counter=0
         until [ $key_counter -gt 5 ]
         do
